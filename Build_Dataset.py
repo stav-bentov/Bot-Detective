@@ -17,7 +17,6 @@ def add_file_input_into_all_df(fileName):
         for user_meta in user_metadata:
             new_row[user_meta] = user[user_meta]
         all_df.loc[new_row_index_in_all_df] = new_row
-
     return all_df
 
 # all the user metadata we want to extract from the input files
