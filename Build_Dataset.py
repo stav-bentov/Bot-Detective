@@ -23,44 +23,53 @@ def add_file_input_into_all_df(features_fileName, target_fileName):
     for index, row in features_df.iterrows():
         # index - number of row in file_df
         # row - {created_at:"", user:{}}
-        user = row['user']
+        new_row = get_user_info(row, target_df)
+        if new_row is not None:
+            all_df.loc[len(all_df)] = new_row
 
-        # create a new row for all_df
-        new_row_index_in_all_df = all_df.index.size # number of rows in all_df
-        new_row = {}
+def get_user_info(current_row, target_df):
+    """
+        Input: current_row of the current observed user
+        Returns: dictonary which represents a row that will be added to the main dataframe,
+                 the new row consist from the required user-metadata and derived features
+    """
+    user = current_row['user']
+    probe_time = datetime.now().replace(microsecond=0)
 
-        # update user target (Bot/Not Bot)
-        
-        if user['id'] not in target_df.index: # if there is not target label for this user, ignore this user
-            continue
-        label = str(target_df.loc[user['id']]['target']) # get the target label
-        if label.lower() == "bot": # if the target is 1 (Bot)
-            new_row['target'] = 1
-        else: # if the target is 0 (Human)
-            new_row['target'] = 0
+    # create a new row for all_df
+    new_row = {}
 
-        # Add user metadata
-        for user_meta in user_metadata:
-            new_row[user_meta] = user[user_meta]
+    # update user target (Bot/Not Bot)
+    if user['id'] not in target_df.index: # if there is not target label for this user, ignore this user
+        return None
+    label = str(target_df.loc[user['id']]['target']) # get the target label
+    if label.lower() == "bot": # if the target is 1 (Bot)
+        new_row['target'] = 1
+    else: # if the target is 0 (Human)
+        new_row['target'] = 0
 
-        # Calculte created_at, set the right format and transform to datetime object (from TimeStamp)
-        created_at = row["created_at"].to_pydatetime().replace(tzinfo=None) 
-        # Calculate user_age with probe_time in the right format
-        user_age = get_user_age(probe_time, created_at)
+    # Add user metadata
+    for user_meta in user_metadata:
+        new_row[user_meta] = user[user_meta]
 
-        # Add derived features
-        for feature, calc in user_derived_features.items():
-            num_variables = calc[0]
-            calc_function = calc[-1]
-            x1 = user[calc[1]]
-            if (num_variables == 1):
-                new_row[feature] = calc_function(x1)
-            else: #else- num_variables == 2
-                # max- Take care of a case where x2 = 0 (will get a devision by 0)
-                x2 = max (user_age if calc[2] == "user_age" else user[calc[2]], 1)
-                new_row[feature] = calc_function(x1, x2)
-        
-        all_df.loc[new_row_index_in_all_df] = new_row
+    # Calculte created_at, set the right format and transform to datetime object (from TimeStamp)
+    created_at = current_row["created_at"].to_pydatetime().replace(tzinfo=None) 
+    # Calculate user_age with probe_time in the right format
+    user_age = get_user_age(probe_time, created_at)
+
+    # Add derived features
+    for feature, calc in user_derived_features.items():
+        num_variables = calc[0]
+        calc_function = calc[-1]
+        x1 = user[calc[1]]
+        if (num_variables == 1):
+            new_row[feature] = calc_function(x1)
+        else: #else- num_variables == 2
+            # max- Take care of a case where x2 = 0 (will get a devision by 0)
+            x2 = max (user_age if calc[2] == "user_age" else user[calc[2]], 1)
+            new_row[feature] = calc_function(x1, x2)
+    
+    return new_row
 
 # TODO: discuss with Tamir
 def likelihood(str: str) -> float:
@@ -143,7 +152,6 @@ all_df.to_csv("./Datasets/all_df.csv", index=False) # index=False - don't export
 print(all_df.index.size) # number of rows in all_df
 print(all_df.columns) # all_df columns
 print(all_df.head()) # print first 5 rows of all_df
-
 
 # TODO
 # 1. DERIVED FEATURES -DONE (only check likelihood is OK)
