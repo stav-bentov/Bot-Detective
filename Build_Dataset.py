@@ -1,6 +1,6 @@
 import pandas as pd
 import sys
-import nltk
+import nltk 
 from collections import Counter
 from nltk.util import bigrams
 import math
@@ -10,13 +10,16 @@ from datetime import datetime
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
 
-def add_file_input_into_all_df(fileName):
+def add_file_input_into_all_df(featurs_fileName, target_fileName):
     """
         Input: fileName is a source of a dataset
         Updates the main dataframe named all_df with the required features and data
     """
-    file_df = pd.read_json(fileName, encoding='utf-8')
-    for index, row in file_df.iterrows():
+    # read the target file into a dataframe
+    target_df = pd.read_csv(target_fileName, sep='\t', names=['id', 'target'], index_col= 'id' , encoding='utf-8') # set id as index, add column names
+    features_df = pd.read_json(featurs_fileName, encoding='utf-8') # read the input file into a dataframe
+    
+    for index, row in features_df.iterrows():
         # index - number of row in file_df
         # row - {created_at:"", user:{}}
         user = row['user']
@@ -25,13 +28,23 @@ def add_file_input_into_all_df(fileName):
         new_row_index_in_all_df = all_df.index.size # number of rows in all_df
         new_row = {}
 
+        # update user target (Bot/Not Bot)
+        
+        if user['id'] not in target_df.index: # if there is not target label for this user, ignore this user
+            continue
+        label = str(target_df.loc[user['id']]['target']) # get the target label
+        if label.lower() == "bot": # if the target is 1 (Bot)
+            new_row['target'] = 1
+        else: # if the target is 0 (Human)
+            new_row['target'] = 0
+
         # Add user metadata
         for user_meta in user_metadata:
-            new_row[user_meta] = user[user_meta]
+            new_row[user_meta] = user[user_meta] # update metadata feature
         all_df.loc[new_row_index_in_all_df] = new_row
 
         # Calculte created_at
-        user_age = get_user_age(user[created_at])
+        # user_age = get_user_age(user[created_at])
         # Add derived features
         """for feature, calc in user_derived_features:
             if (calc[0] == 1):
@@ -39,9 +52,6 @@ def add_file_input_into_all_df(fileName):
             else:
             #else- calc[0] == 2"""
 
-    
-    # TODO: I think we can delete the return object
-    return all_df
 
 # TODO: discuss with Tamir
 def likelihood(str: str) -> float:
@@ -58,17 +68,17 @@ def likelihood(str: str) -> float:
 
     return math.pow(biagrams_mul , (1/num_dif_bigrams))
 
-def get_user_age(created_at):
-    """
-        Input: created_at (from dataset)
-        Returns: The hour difference between probe_time and created_at
-                 The user age is defined as the hour difference between
-                 the probe time (when the query happens) and the 
-                 creation (created_at field) time of the user.
-    """
-    probe_time = datetime.now()
-    hour_difference =  (probe_time - created_at).total_seconds() / 3600
-    return hour_difference
+# def get_user_age(created_at):
+#     """
+#         Input: created_at (from dataset)
+#         Returns: The hour difference between probe_time and created_at
+#                  The user age is defined as the hour difference between
+#                  the probe time (when the query happens) and the 
+#                  creation (created_at field) time of the user.
+#     """
+#     probe_time = datetime.now()
+#     hour_difference =  (probe_time - created_at).total_seconds() / 3600
+#     return hour_difference
 
 # all the user metadata we want to extract from the input files
 user_metadata = ["statuses_count", "followers_count", "friends_count", "favourites_count", "listed_count",
@@ -97,21 +107,27 @@ date_format = '%a %b %d %H:%M:%S +0000 %Y'
 created_at = "created_at"
 # notice it doesn't include -varol- because it is only labeling Bot/Not Bot
 # and doesn't include -cresci17-
-input_fileNames = ["./Datasets/botometer-feedback-2019/botometer-feedback-2019_tweets.json",
-                   "./Datasets/celebrity-2019/celebrity-2019_tweets.json",
-                   "./Datasets/political-bots-2019/political-bots-2019_tweets.json",]
+# format is: (input_fileName, target_fileName)
+input_fileNames = [("./Datasets/botometer-feedback-2019/botometer-feedback-2019_tweets.json", "./Datasets/botometer-feedback-2019/botometer-feedback-2019.tsv"),
+                   ("./Datasets/celebrity-2019/celebrity-2019_tweets.json", "Datasets\celebrity-2019\celebrity-2019.tsv"),
+                   ("./Datasets/political-bots-2019/political-bots-2019_tweets.json","Datasets\political-bots-2019\political-bots-2019.tsv")]
 
 # create a dataframe for all features we want 
-all_df = pd.DataFrame(columns=user_metadata)
+all_df = pd.DataFrame(columns=user_metadata+['target'])
 
 # iterate over all input files and add their data to all_df
-for fileName in input_fileNames:
-    add_file_input_into_all_df(fileName)
+for data_tuple in input_fileNames:
+    features_fileName = data_tuple[0] # features file name
+    target_fileName = data_tuple[1] # target file name
+    add_file_input_into_all_df(features_fileName, target_fileName)
 
 # export all_df to csv file
 all_df.to_csv("./Datasets/all_df.csv", index=False) # index=False - don't export index column
 
 print(all_df.index.size) # number of rows in all_df
+print(all_df.columns) # all_df columns
+print(all_df.head()) # print first 5 rows of all_df
+
 
 # TODO
 # 1. DERIVED FEATURES
