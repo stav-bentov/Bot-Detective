@@ -1,5 +1,6 @@
 import pandas as pd
 import sys
+import os
 import nltk 
 from collections import Counter
 from nltk.util import bigrams
@@ -9,6 +10,23 @@ from datetime import datetime
 # setting python encoder to utf-8 to avoid encoding errors
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
+
+def add_csv_file_input_into_all_df(features_fileName):
+    """
+        add files to all_df from csv_files - cresci17
+        Input: fileName is a source of a dataset
+        Updates the main dataframe named all_df with the required features and data
+    """
+    features_df = pd.read_csv(features_fileName, encoding='utf-8') # read the input file into a dataframe
+    probe_time = datetime.now().replace(microsecond=0)
+
+    for index, row in features_df.iterrows():
+        print(row)
+        # index - number of row in features_df
+        # row - {created_at:"", user:{}}
+        new_row = get_user_info(row, None) # target_df is None because we don't have target in this dataset
+        if new_row is not None:
+            all_df.loc[len(all_df)] = new_row
 
 def add_file_input_into_all_df(features_fileName, target_fileName):
     """
@@ -140,11 +158,28 @@ columns = user_metadata + list(user_derived_features.keys()) + ['target']
 # create a dataframe for all features we want 
 all_df = pd.DataFrame(columns = columns)
 
+# now add the data from creci17 dataset
+csv_datasets = ["./Datasets/csv-datasets/users_fake_followers.csv",
+                "./Datasets/csv-datasets/users_genuine_acconts.csv",
+                "./Datasets/csv-datasets/users_social_spambots_1.csv",
+                "./Datasets/csv-datasets/users_social_spambots_2.csv",
+                "./Datasets/csv-datasets/users_social_spambots_3.csv",
+                "./Datasets/csv-datasets/users_traditional_spambots_1.csv",
+                "./Datasets/csv-datasets/users_traditional_spambots_2.csv",
+                "./Datasets/csv-datasets/users_traditional_spambots_3.csv",
+                "./Datasets/csv-datasets/users_traditional_spambots_4.csv" ]
+
+for fileName in csv_datasets:
+    add_csv_file_input_into_all_df(fileName)
+
+
 # iterate over all input files and add their data to all_df
 for data_tuple in input_fileNames:
     features_fileName = data_tuple[0] # features file name
     target_fileName = data_tuple[1] # target file name
     add_file_input_into_all_df(features_fileName, target_fileName)
+
+
 
 # export all_df to csv file
 all_df.to_csv("./Datasets/all_df.csv", index=False) # index=False - don't export index column
