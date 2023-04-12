@@ -11,67 +11,104 @@ from datetime import datetime
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
 
-def add_csv_file_input_into_all_df(features_fileName):
+def add_csv_file_input_into_all_df(features_fileName, target):
     """
-        add files to all_df from csv_files - cresci17
-        Input: fileName is a source of a dataset
+        Input: features_fileName is a source of a dataset, target- all the users in 
+               this dataset are bot/human, this dataset is taken from cresci-17
         Updates the main dataframe named all_df with the required features and data
     """
     features_df = pd.read_csv(features_fileName, encoding='utf-8') # read the input file into a dataframe
-    probe_time = datetime.now().replace(microsecond=0)
+    # Conver nan to "" (for the len calculation in derived features)
+    features_df.fillna("", inplace=True)
 
+    # index - number of row in features_df
+    # row - {all user metadata}
     for index, row in features_df.iterrows():
-        print(row)
-        # index - number of row in features_df
-        # row - {created_at:"", user:{}}
-        new_row = get_user_info(row, None) # target_df is None because we don't have target in this dataset
-        if new_row is not None:
-            all_df.loc[len(all_df)] = new_row
+        # Passing a features_fileName only for csv files because it will be needed for created at
+        # target is know according to the csv value
+        new_row = get_user_info(features_fileName, row, target, row)
+        all_df.loc[len(all_df)] = new_row
+
+def is_bot(row, target_df):
+    """
+        Input: row of the user and target_df
+        Returns: 1- if bot, else-if not- 0 according to the id of user in row and id from target_df
+                            else- if there is no information- None
+    """
+     # update user target (Bot/Not Bot)
+    if row['user']['id'] not in target_df.index: # if there is not target label for this user, ignore this user
+        return None
+    label = str(target_df.loc[row['user']['id']]['target']) # get the target label
+    if label.lower() == "bot": # if the target is 1 (Bot)
+        return 1
+    else: # if the target is 0 (Human)
+        return 0
 
 def add_file_input_into_all_df(features_fileName, target_fileName):
     """
-        Input: fileName is a source of a dataset
+        Input: fileName is a source of a dataset and target_fileName- bot/not info
         Updates the main dataframe named all_df with the required features and data
     """
     # read the target file into a dataframe
     target_df = pd.read_csv(target_fileName, sep='\t', names=['id', 'target'], index_col= 'id' , encoding='utf-8') # set id as index, add column names
     features_df = pd.read_json(features_fileName, encoding='utf-8') # read the input file into a dataframe
-    probe_time = datetime.now().replace(microsecond=0)
 
+    # index - number of row in file_df
+    # row - {created_at:"", user:{}}
     for index, row in features_df.iterrows():
-        # index - number of row in file_df
-        # row - {created_at:"", user:{}}
-        new_row = get_user_info(row, target_df)
-        if new_row is not None:
+        target = is_bot(row, target_df)
+        # If there is information about bot/human- get metadata and features
+        if target is not None:
+            user = row['user']
+            # filename is None regarding to json files
+            new_row = get_user_info(None, row, target, user)
             all_df.loc[len(all_df)] = new_row
 
-def get_user_info(current_row, target_df):
+def get_created_at(current_row, file_name):
     """
-        Input: current_row of the current observed user
+        Input: current_row of user and file_name (= None for json files)
+        Returns: created_at field as a datetime.datetime object with the right format
+    """
+    # Calculte created_at, set the right format and transform to datetime object (from TimeStamp)
+    if file_name is None: # get value from json files
+        created_at = current_row["created_at"].to_pydatetime().replace(tzinfo=None) 
+    else: #or get value from csv
+        # only this file has special timestamp- need to convert in a specipc way
+        if (file_name == "./Datasets/csv-datasets/users_traditional_spambots_1.csv"):
+            # get read of "L"
+            timestamp = current_row["created_at"][:-1] 
+            # from milliseconds to seconds
+            timestamp = int(timestamp) / 1000 
+            created_at = datetime.utcfromtimestamp(timestamp)
+        else:
+            # Get the date
+            created_at = datetime.strptime(current_row["created_at"], '%a %b %d %H:%M:%S +0000 %Y')
+    return created_at
+
+def get_user_info(file_name, current_row, target, user):
+    """
+        Input: file_name (= only for csv file to make the right calculation in get_created_at()),
+               current_row (used for get_created_at()) of the current observed user,
+               target - bot or not,
+               user- for json files it's a dictonary with user metadata, for csv it's the row
         Returns: dictonary which represents a row that will be added to the main dataframe,
                  the new row consist from the required user-metadata and derived features
     """
-    user = current_row['user']
     probe_time = datetime.now().replace(microsecond=0)
 
     # create a new row for all_df
     new_row = {}
 
-    # update user target (Bot/Not Bot)
-    if user['id'] not in target_df.index: # if there is not target label for this user, ignore this user
-        return None
-    label = str(target_df.loc[user['id']]['target']) # get the target label
-    if label.lower() == "bot": # if the target is 1 (Bot)
-        new_row['target'] = 1
-    else: # if the target is 0 (Human)
-        new_row['target'] = 0
+    # Update bot/not with target
+    new_row['target'] = target
 
     # Add user metadata
     for user_meta in user_metadata:
         new_row[user_meta] = user[user_meta]
+    
+    # get created_at as datetime.datetime object with the right format
+    created_at = get_created_at(current_row, file_name)
 
-    # Calculte created_at, set the right format and transform to datetime object (from TimeStamp)
-    created_at = current_row["created_at"].to_pydatetime().replace(tzinfo=None) 
     # Calculate user_age with probe_time in the right format
     user_age = get_user_age(probe_time, created_at)
 
@@ -152,31 +189,33 @@ user_derived_features = {"tweet_freq": [2, "statuses_count", "user_age", calcula
 input_fileNames = [("./Datasets/botometer-feedback-2019/botometer-feedback-2019_tweets.json", "./Datasets/botometer-feedback-2019/botometer-feedback-2019.tsv"),
                    ("./Datasets/celebrity-2019/celebrity-2019_tweets.json", "Datasets\celebrity-2019\celebrity-2019.tsv"),
                    ("./Datasets/political-bots-2019/political-bots-2019_tweets.json","Datasets\political-bots-2019\political-bots-2019.tsv")]
+# data from creci17 dataset
+csv_datasets = {"./Datasets/csv-datasets/users_fake_followers.csv": 1,
+                "./Datasets/csv-datasets/users_genuine_acconts.csv": 0,
+                "./Datasets/csv-datasets/users_social_spambots_1.csv": 1,
+                "./Datasets/csv-datasets/users_social_spambots_2.csv": 1,
+                "./Datasets/csv-datasets/users_social_spambots_3.csv": 1,
+                "./Datasets/csv-datasets/users_traditional_spambots_1.csv": 1,
+                "./Datasets/csv-datasets/users_traditional_spambots_2.csv": 1,
+                "./Datasets/csv-datasets/users_traditional_spambots_3.csv": 1,
+                "./Datasets/csv-datasets/users_traditional_spambots_4.csv": 1
+              }
 
 columns = user_metadata + list(user_derived_features.keys()) + ['target']
 
 # create a dataframe for all features we want 
 all_df = pd.DataFrame(columns = columns)
 
-# now add the data from creci17 dataset
-csv_datasets = ["./Datasets/csv-datasets/users_fake_followers.csv",
-                "./Datasets/csv-datasets/users_genuine_acconts.csv",
-                "./Datasets/csv-datasets/users_social_spambots_1.csv",
-                "./Datasets/csv-datasets/users_social_spambots_2.csv",
-                "./Datasets/csv-datasets/users_social_spambots_3.csv",
-                "./Datasets/csv-datasets/users_traditional_spambots_1.csv",
-                "./Datasets/csv-datasets/users_traditional_spambots_2.csv",
-                "./Datasets/csv-datasets/users_traditional_spambots_3.csv",
-                "./Datasets/csv-datasets/users_traditional_spambots_4.csv" ]
-
-for fileName in csv_datasets:
-    add_csv_file_input_into_all_df(fileName)
+for fileName, target in csv_datasets.items():
+    print(fileName)
+    add_csv_file_input_into_all_df(fileName, target)
 
 
 # iterate over all input files and add their data to all_df
 for data_tuple in input_fileNames:
     features_fileName = data_tuple[0] # features file name
     target_fileName = data_tuple[1] # target file name
+    print(features_fileName)
     add_file_input_into_all_df(features_fileName, target_fileName)
 
 
