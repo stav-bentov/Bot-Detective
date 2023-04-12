@@ -1,7 +1,5 @@
 import pandas as pd
 import sys
-import os
-import nltk 
 from collections import Counter
 from nltk.util import bigrams
 import math
@@ -104,7 +102,17 @@ def get_user_info(file_name, current_row, target, user):
 
     # Add user metadata
     for user_meta in user_metadata:
-        new_row[user_meta] = user[user_meta]
+        if user_meta not in boolean_features: # if not boolean feature
+            new_row[user_meta] = user[user_meta] # add the value as usual
+        else: 
+            if user[user_meta] == "" or user[user_meta] == False:
+                new_row[user_meta] = 0
+            elif user[user_meta] == True or user[user_meta] == 1:
+                new_row[user_meta] = 1
+            else:
+                print("Error: boolean feature is not boolean")
+                print(user[user_meta])
+                exit(1) 
     
     # get created_at as datetime.datetime object with the right format
     created_at = get_created_at(current_row, file_name)
@@ -125,7 +133,7 @@ def get_user_info(file_name, current_row, target, user):
             new_row[feature] = calc_function(x1, x2)
     
     return new_row
-
+    
 # TODO: discuss with Tamir
 def likelihood(str: str) -> float:
     """
@@ -142,7 +150,6 @@ def likelihood(str: str) -> float:
     num_bigrams = len(bigrams_list)
     num_dif_bigrams = len(bigrams_likelihood)
     
-    #BEFORE: biagrams_mul = math.prod(bigrams_likelihood.values()) * math.pow((1/num_bigrams), num_dif_bigrams) (I think it's more efficent)
     biagrams_mul = math.prod([value * (1/num_bigrams) for value in bigrams_likelihood.values()])
 
     # geometric-mean defenition
@@ -160,9 +167,13 @@ def get_user_age(probe_time, created_at):
     hour_difference =  (probe_time - created_at).total_seconds() / 3600 
     return hour_difference
 
+#################################### main ####################################
+
 # all the user metadata we want to extract from the input files
 user_metadata = ["statuses_count", "followers_count", "friends_count", "favourites_count", "listed_count",
                   "default_profile", "profile_use_background_image", "verified"]
+
+boolean_features = ["verified", "default_profile", "profile_use_background_image"] # features with 1/0 values (1- True, 0- False)
 
 # Define calculation according to the article. 
 calculations = {"division": lambda x1,x2: x1/x2,
@@ -207,27 +218,14 @@ columns = user_metadata + list(user_derived_features.keys()) + ['target']
 all_df = pd.DataFrame(columns = columns)
 
 for fileName, target in csv_datasets.items():
-    print(fileName)
     add_csv_file_input_into_all_df(fileName, target)
-
 
 # iterate over all input files and add their data to all_df
 for data_tuple in input_fileNames:
     features_fileName = data_tuple[0] # features file name
     target_fileName = data_tuple[1] # target file name
-    print(features_fileName)
     add_file_input_into_all_df(features_fileName, target_fileName)
-
-
 
 # export all_df to csv file
 all_df.to_csv("./Datasets/all_df.csv", index=False) # index=False - don't export index column
 
-print(all_df.index.size) # number of rows in all_df
-print(all_df.columns) # all_df columns
-print(all_df.head()) # print first 5 rows of all_df
-
-# TODO
-# 1. DERIVED FEATURES -DONE (only check likelihood is OK)
-# 2. TARGET COLUMN
-# 3. THE CRESCI17 DATASET
