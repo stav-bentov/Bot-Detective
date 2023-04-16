@@ -1,0 +1,18 @@
+For metadata we need:
+    1. statuses count
+V   2. followers count
+    3. friends count
+    4. favourites count
+V   5. listed count
+    6. default profile
+    7. profile use background image
+V   8. verified
+
+For derived features we need:
+V   1. name
+V   2. screen_name                  = username
+V   3. created at
+V   4. description
+V   5. followers count
+V   6. listed count
+    7. favourites count
