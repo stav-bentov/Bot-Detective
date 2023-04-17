@@ -5,7 +5,7 @@ V   3. friends count                =following_count            The number of us
 V   4. favourites count             =like_count                 The number of Tweets this user has liked in the account’s lifetime. British spelling used in the field name for historical reasons.
 V   5. listed count                                             The number of public lists that this user is a member of.
     6. default profile                                          When true, indicates that the user has not altered the theme or background of their user profile.
-    7. profile use background image                             When true, indicates that the user has not uploaded their own profile image and a default image is used instead.
+V    7. profile use background image                             When true, indicates that the user has not uploaded their own profile image and a default image is used instead.
 V   8. verified                                                 When true, indicates that the user has a verified account.
 
 For derived features we need:

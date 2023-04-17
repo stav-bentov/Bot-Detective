@@ -28,8 +28,11 @@ def create_model():
     '''
     model.fit(X_train, Y_train)
 
-    accuracy = model.score(X_test, Y_test)
-    print("accuracy of this model+parameters is: ", accuracy)
+    # calculate 5-fold cross-validation
+    from sklearn.model_selection import cross_val_score
+    scores = cross_val_score(model, X, Y, cv=5, scoring='accuracy')
+    print("cross validation accuracy of this model+parameters is: ", scores.mean())
+    
 
     return model
 

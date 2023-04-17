@@ -5,6 +5,9 @@ from nltk.util import bigrams
 import math
 from datetime import datetime
 
+# TODO: for "profile use background image" need to check that the image is not the default one(https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png)
+
+
 # setting python encoder to utf-8 to avoid encoding errors
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
@@ -134,7 +137,6 @@ def get_user_info(file_name, current_row, target, user):
     
     return new_row
     
-# TODO: discuss with Tamir
 def likelihood(str: str) -> float:
     """
         Input: string (screen_name/ name)
