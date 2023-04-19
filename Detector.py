@@ -1,16 +1,13 @@
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from TwitterAPI import TwitterAPI
+import twitter
+import tweepy
+
 '''
     Tamir says to Stav: "I think we use the split only now for the test, but when the model is finished we will train on all the data"
 '''
 from sklearn.model_selection import train_test_split
-
-consumer_key = "tBwp11YRUZwM1OXGMVybNnuJH"
-consumer_secret = "IxT4uCKbiUvBoMVDlDDRVLg7F22VgJSkHL0CxFirDQoMnVBCpZ"
-access_token_key = "1642120821979115520-diImePbIobWbd2SfCmD5YUVzk2uwe7"
-access_token_secret = "XUghL2Tsf6TrEmBeYcFlQvsfuau7bl0awnboCRPM0pYiz"
-
 def create_model():
     # read the data
     df = pd.read_csv('Datasets/all_df.csv')
@@ -37,9 +34,48 @@ def create_model():
     return model
 
 def create_API():
-    api = TwitterAPI(consumer_key, consumer_secret, access_token_key, access_token_secret, api_version='2')
-    r = api.request('users/', {})
+    #api = TwitterAPI(consumer_key, consumer_secret, access_token_key, access_token_secret, api_version='2')
+    api = TwitterAPI(consumer_key,
+                 consumer_secret,
+                 auth_type='oAuth2')
+    SCREEN_NAME = "Liberwomen"
+    r = api.request(f'users/by/username/:{SCREEN_NAME}')
+    print(r.text)
+
+def try_tweepy():
+    bearer_token = "AAAAAAAAAAAAAAAAAAAAAPLbBgEAAAAAuU1B3%2FqeVnDl4%2BPSYNf%2B79%2FbHco%3DIK6cM2hmdXxVTYJ72Etnc6c2Pr4TT0ewUyACOoUibIQq6piogn"
+
+    client = tweepy.Client(bearer_token)
+    SCREEN_NAME = ["Liberwomen"]
+    user_ids = [2244994945, 6253282]
+    response = client.get_users(ids=user_ids)
+    print(response)
 
 
+#try_tweepy()
+#create_API()
 
 
+"""
+try:
+        api = TwitterAPI(consumer_key, consumer_secret, access_token_key, access_token_secret, api_version='2')
+        SCREEN_NAME = "Liberwomen"
+        r = api.request(f'users/by/username/:{SCREEN_NAME}')
+        for item in r:
+            print(item)
+
+        print(r.get_quota())
+
+    except TwitterRequestError as e:
+        print("1")
+        print(e.status_code)
+        for msg in iter(e):
+            print(msg)
+
+    except TwitterConnectionError as e:
+        print("1")
+        print(e)
+
+    except Exception as e:
+        print("3")
+        print(e)"""
