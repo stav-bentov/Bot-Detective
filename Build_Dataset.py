@@ -5,9 +5,6 @@ from nltk.util import bigrams
 import math
 from datetime import datetime
 
-# TODO: for "profile use background image" need to check that the image is not the default one(https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png)
-
-
 # setting python encoder to utf-8 to avoid encoding errors
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
@@ -118,10 +115,10 @@ def get_user_info(file_name, current_row, target, user):
                 exit(1) 
     
     # get created_at as datetime.datetime object with the right format
-    created_at = get_created_at(current_row, file_name)
+    created_at = calculations["created_at"](current_row, file_name)
 
     # Calculate user_age with probe_time in the right format
-    user_age = get_user_age(probe_time, created_at)
+    user_age = calculations["user_age"](probe_time, created_at)
 
     # Add derived features
     for feature, calc in user_derived_features.items():
@@ -137,6 +134,7 @@ def get_user_info(file_name, current_row, target, user):
     
     return new_row
     
+# TODO: discuss with Tamir
 def likelihood(str: str) -> float:
     """
         Input: string (screen_name/ name)
@@ -181,7 +179,9 @@ boolean_features = ["verified", "default_profile", "profile_use_background_image
 calculations = {"division": lambda x1,x2: x1/x2,
                 "length": lambda str: len(str),
                 "count_digits": lambda str: sum(char.isdigit() for char in str),
-                "likelihood":  lambda str: likelihood(str)}
+                "likelihood":  lambda str: likelihood(str),
+                "user_age": lambda probe_time, created_at: get_user_age(probe_time, created_at),
+                "created_at": lambda current_row, file_name: get_created_at(current_row, file_name)}
 
 user_derived_features = {"tweet_freq": [2, "statuses_count", "user_age", calculations["division"]],
                          "followers_growth_rate": [2, "followers_count", "user_age", calculations["division"]],
