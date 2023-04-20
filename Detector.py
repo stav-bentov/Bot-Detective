@@ -12,6 +12,7 @@ sys.stdout.reconfigure(encoding='utf-8')
     Tamir says to Stav: "I think we use the split only now for the test, but when the model is finished we will train on all the data"
 '''
 from sklearn.model_selection import train_test_split
+
 def create_model():
     # read the data
     df = pd.read_csv('Datasets/all_df.csv')

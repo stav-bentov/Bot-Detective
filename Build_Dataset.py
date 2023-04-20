@@ -171,7 +171,7 @@ def get_user_age(probe_time, created_at):
 
 # all the user metadata we want to extract from the input files
 user_metadata = ["statuses_count", "followers_count", "friends_count", "favourites_count", "listed_count",
-                  "default_profile", "profile_use_background_image", "verified"]
+                  "profile_use_background_image", "verified"]
 
 boolean_features = ["verified", "default_profile", "profile_use_background_image"] # features with 1/0 values (1- True, 0- False)
 
