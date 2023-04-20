@@ -93,7 +93,7 @@ def get_user_info(file_name, current_row, target, user):
                  the new row consist from the required user-metadata and derived features
     """
     probe_time = datetime.now().replace(microsecond=0)
-
+    
     # create a new row for all_df
     new_row = {}
 
@@ -116,7 +116,6 @@ def get_user_info(file_name, current_row, target, user):
     
     # get created_at as datetime.datetime object with the right format
     created_at = calculations["created_at"](current_row, file_name)
-
     # Calculate user_age with probe_time in the right format
     user_age = calculations["user_age"](probe_time, created_at)
 
