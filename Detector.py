@@ -1,12 +1,34 @@
-import pandas as pd
-import sklearn
-from sklearn.ensemble import RandomForestClassifier
+
 from access_keys import bearer_token
-import tweepy
-import sys
-from Build_Dataset import likelihood, get_user_age
+import tweepy 
+import sys 
 from datetime import datetime
-from sklearn.model_selection import train_test_split
+import pickle # for loading the model
+import pandas as pd
+
+from nltk.util import bigrams
+from collections import Counter
+import math
+def likelihood(str: str) -> float:
+    """
+        Input: string (screen_name/ name)
+        Returns: The likelihood of the given string.
+                 likelihood is defined by the geometric-mean likelihood of all bigrams in it.
+    """
+    # Create a list of all bigrams in str
+    bigrams_list = list(bigrams(str))
+    # Create a Dictonary with each bigram frequency
+    bigrams_likelihood = Counter(bigrams_list)
+
+    # Calculte number of all bigrams and number of different bigrams
+    num_bigrams = len(bigrams_list)
+    num_dif_bigrams = len(bigrams_likelihood)
+    
+    biagrams_mul = math.prod([value * (1/num_bigrams) for value in bigrams_likelihood.values()])
+
+    # geometric-mean defenition
+    return math.pow(biagrams_mul , (1/num_dif_bigrams))
+
 
 # ========================================== Define variables ========================================== #
 sys.stdin.reconfigure(encoding='utf-8')
@@ -21,8 +43,8 @@ calculations = {"statuses_count": lambda User: User["public_metrics"]["tweet_cou
                 "friends_count": lambda User: User["public_metrics"]["following_count"],
                 "favourites_count": lambda User: get_liked_tweets(User["id"]),
                 "listed_count": lambda User: User["public_metrics"]["listed_count"],
-                "profile_use_background_image": lambda User: User["profile_image_url"] == default_image_url,
-                "verified": lambda User: User["verified"],
+                "profile_use_background_image": lambda User: 1 if User["profile_image_url"] == default_image_url else 0, # boolean -> 0/1
+                "verified": lambda User: 1 if User["verified"] else 0, # boolean -> 0/1
 
                 "screen_name": lambda User: User["username"],
                 "name": lambda User: User["name"],
@@ -54,36 +76,26 @@ user_derived_features = {"tweet_freq": [2, "statuses_count", "user_age", calcula
 
 # ========================================== Functions ========================================== #
 
-# TODO: Tamir- add five-fold-test
-# TODO: save the model
-'''
-    Tamir says to Stav: "I think we use the split only now for the test, but when the model is finished we will train on all the data"
-'''
-def create_model():
+def load_model():
     """
-        Generate the model according to the collected dataset in 'Datasets/all_df.csv'
-        and returns it
+        Load the model from detector_model.pkl
     """
-    # read the data
-    df = pd.read_csv('Datasets/all_df.csv')
-
-    # train test split
-    X = df.drop('target', axis=1)
-    Y = df['target']
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=42)
-
-    # train the model
-    model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=1)
-
-    '''
-        Tamir: notice we may do grid search to find the best max depth for the model using grid search
-    '''
-    model.fit(X_train, Y_train)
-
-    accuracy = model.score(X_test, Y_test)
-    print("accuracy of this model+parameters is: ", accuracy)
-
+    with open('detector_model.pkl', 'rb') as f: # rb = read binary
+        model = pickle.load(f) # load the model from the file
     return model
+
+# TODO: later on, consider making a function for prediction of bunch of users
+def model_predict_if_user_is_bot(model, user_metadata):
+    """
+        Input: 1) model. 2) user_metadata = a dictonary with features as keys and their corresponding values of the username
+        Returns: 1 - bot, 0 - human
+    """
+    # create a dataframe with the user_metadata
+    df_user_data = pd.DataFrame(user_metadata, index=[0]) 
+
+    # predict the target
+    prediction = model.predict(df_user_data) # prediction [(0/1),...,] is list of predictions for many users, we only have 1 user
+    return prediction[0] == 1 # return True if the user is a bot
 
 def get_liked_tweets(user_id):
     """
@@ -130,4 +142,5 @@ def get_metadata(username):
 
     return user_metadata
 
-print(get_metadata("Librewomen"))
+# meta = get_metadata("YairNetanyahu")
+# print(model_predict_if_user_is_bot(load_model(), meta))

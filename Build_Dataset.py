@@ -133,7 +133,6 @@ def get_user_info(file_name, current_row, target, user):
     
     return new_row
     
-# TODO: discuss with Tamir
 def likelihood(str: str) -> float:
     """
         Input: string (screen_name/ name)
