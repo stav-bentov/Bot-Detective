@@ -12,6 +12,3 @@ After training, the model was able to classify new Twitter users with accuracy o
 
 # Future Development
 Create a Chrome extension using Flask and Redis. The extension will add a small label near each Twitter user's name indicating whether they are classified as a bot or not. The extension will work by sending the Twitter user's metadata to the machine learning model, which then returns a classification label. The label will be display next to the user's name on the Twitter website.
-
-# Usage
-To use Twitter Bot Detector, simply install the Chrome extension from the Chrome Web Store. Once installed, the extension will automatically add labels to Twitter user names indicating whether they are bots or not. The extension can be turned on or off at any time by clicking the extension icon in the Chrome toolbar.
