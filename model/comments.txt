@@ -2,9 +2,9 @@ For metadata we need:
 V   1. statuses count               =public_metrics[tweet_count]                The number of Tweets (including retweets) issued by the user.
 V   2. followers count              =public_metrics[followers_count]            The number of followers this account currently has. Under certain conditions of duress, this field will temporarily indicate “0”.
 V   3. friends count                =public_metrics[following_count]            The number of users this account is following (AKA their “followings”). Under certain conditions of duress, this field will temporarily indicate “0”.
-X   4. favourites count             =like_count                                 The number of Tweets this user has liked in the account’s lifetime. British spelling used in the field name for historical reasons.
+V   4. favourites count             =like_count                                 The number of Tweets this user has liked in the account’s lifetime. British spelling used in the field name for historical reasons.
 V   5. listed count                 =public_metrics[listed_count]               The number of public lists that this user is a member of.
-    6. default profile                                                          When true, indicates that the user has not altered the theme or background of their user profile.
+X   6. default profile                                                          When true, indicates that the user has not altered the theme or background of their user profile.
 V   7. profile use background image =[profile_image_url==default]               When true, indicates that the user has not uploaded their own profile image and a default image(https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png) is used instead.
 V   8. verified                     =verified                                   When true, indicates that the user has a verified account.
 
@@ -17,6 +17,5 @@ V   5. followers count              =public_metrics[followers_count]
 V   6. listed count                 =public_metrics[listed_count]
 V   7. favourites count             =like_count
 
-
-Regarding (4) likes: https://developer.twitter.com/en/docs/twitter-api/tweets/likes/introduction
-go over all TODO's
+TODO:
+1. go over all TODO's
