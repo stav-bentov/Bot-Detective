@@ -1,4 +1,3 @@
-
 from access_keys import bearer_token
 import tweepy 
 import sys 
@@ -142,5 +141,5 @@ def get_metadata(username):
 
     return user_metadata
 
-# meta = get_metadata("YairNetanyahu")
-# print(model_predict_if_user_is_bot(load_model(), meta))
+meta = get_metadata("YairNetanyahu")
+print(model_predict_if_user_is_bot(load_model(), meta))
