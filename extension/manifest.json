@@ -1,7 +1,14 @@
 {
-    "manifest_version": 2,
+    "manifest_version": 3,
 
     "name": "Twitter Bot Detector",
     "description": "This a Twitter Bot Detector.",
-    "version": "1.0"
+    "version": "1.0",
+
+    "content_scripts": [
+        {
+           "js": ["getUsers.js"],
+           "matches": ["https://twitter.com/*"]
+        }
+    ]
 }
