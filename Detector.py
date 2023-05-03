@@ -4,10 +4,10 @@ import sys
 from datetime import datetime
 import pickle # for loading the model
 import pandas as pd
-
 from nltk.util import bigrams
 from collections import Counter
 import math
+
 def likelihood(str: str) -> float:
     """
         Input: string (screen_name/ name)
@@ -140,6 +140,18 @@ def get_metadata(username):
             user_metadata[feature] = calc_function(x1, x2)
 
     return user_metadata
+
+def detect_users(users):
+    res = []
+    for username in users:
+        meta = get_metadata(username)
+        res.append(model_predict_if_user_is_bot(load_model(), meta))
+    return res
+
+def detect_user(username):
+    meta = get_metadata(username)
+    return model_predict_if_user_is_bot(load_model(), meta)
+
 
 meta = get_metadata("YairNetanyahu")
 print(model_predict_if_user_is_bot(load_model(), meta))
