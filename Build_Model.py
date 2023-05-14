@@ -17,13 +17,13 @@ def create_and_save_model():
     Y = df['target']
 
     # train the model
-    model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=1)
+    model = RandomForestClassifier(n_estimators = 100, max_depth = 5, random_state = 1)
 
     model.fit(X, Y)
 
     # calc 5 fold cross validation test
-    # scores = cross_val_score(model, X, Y, cv=5)
-    # print("cross validation scores: ", scores.mean()) # scores.mean() = 0.962
+    scores = cross_val_score(model, X, Y, cv = 5)
+    print("cross validation scores: ", scores.mean()) # scores.mean() = 0.962
 
     # save the model
     with open('detector_model.pkl', 'wb') as f: # wb = write binary

@@ -68,14 +68,14 @@ def get_created_at(current_row, file_name):
         Returns: created_at field as a datetime.datetime object with the right format
     """
     # Calculte created_at, set the right format and transform to datetime object (from TimeStamp)
-    if file_name is None: # get value from json files
-        created_at = current_row["created_at"].to_pydatetime().replace(tzinfo=None) 
+    if file_name is None: # Get value from json files
+        created_at = datetime.strptime(current_row["user"]["created_at"], '%a %b %d %H:%M:%S +0000 %Y')
     else: #or get value from csv
-        # only this file has special timestamp- need to convert in a specipc way
+        # Only this file has special timestamp- need to convert in a specipc way
         if (file_name == "./Datasets/csv-datasets/users_traditional_spambots_1.csv"):
             # get read of "L"
             timestamp = current_row["created_at"][:-1] 
-            # from milliseconds to seconds
+            # From milliseconds to seconds
             timestamp = int(timestamp) / 1000 
             created_at = datetime.utcfromtimestamp(timestamp)
         else:
@@ -92,9 +92,16 @@ def get_user_info(file_name, current_row, target, user):
         Returns: dictonary which represents a row that will be added to the main dataframe,
                  the new row consist from the required user-metadata and derived features
     """
-    probe_time = datetime.now().replace(microsecond=0)
+    # In tweets probe time = created time (of the tweets), in fake followers = updated, in others = crawled_at (collection time)
+    if file_name is None: # Get value from json files
+        probe_time = datetime.strptime(str(current_row["created_at"]), '%Y-%m-%d %H:%M:%S+00:00')
+    else:
+        if (file_name == "./Datasets/csv-datasets/users_fake_followers.csv"): # user = metadata... "updated"
+            probe_time = datetime.strptime(user["updated"], "%Y-%m-%d %H:%M:%S")
+        else: # user = metadata... "crawled_at"
+            probe_time = datetime.strptime(user["crawled_at"], "%Y-%m-%d %H:%M:%S")
     
-    # create a new row for all_df
+    # Create a new row for all_df
     new_row = {}
 
     # Update bot/not with target
