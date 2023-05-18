@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../Twitter_Bot_Detector')
+sys.path.append('../Twitter-Bot-Detector')
 from Detector import detect_user
 from flask import Flask
 from flask_restful import Api, Resource
@@ -19,4 +19,4 @@ api.add_resource(is_bot, "/isBot/<string:username>")
 def home():
 	return "Hello, world!"
 
-app.run(port=5000)
+app.run(port=5000, debug=True) # debug=True -> if there is an error, it will show on the screen
