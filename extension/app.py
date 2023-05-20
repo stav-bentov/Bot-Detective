@@ -2,21 +2,25 @@ import sys
 sys.path.append('../Twitter-Bot-Detector')
 from Detector import detect_user
 from flask import Flask
-from flask_restful import Api, Resource
+from flask import jsonify, make_response
+from flask_cors import CORS
 
 app = Flask(__name__)
-api = Api(app)
 
+# To avoid  No 'Access-Control-Allow-Origin' header is present on the requested resource.
+CORS(app)
 
-class is_bot(Resource):
-	def get(self, username):
-		return {"is_bot": detect_user(username)}
-
-# When we send a get request to /isBot it should return the True/False, given a string 
-api.add_resource(is_bot, "/isBot/<string:username>")
+@app.route("/isBot/<string:username>/")
+def is_bot(username):
+	print("in backend for: ", username)
+	# The return value from a function in a Flask app should be JSON serializable.
+	result = 0 if detect_user(username) else 1
+	return jsonify({username: result})
 
 @app.route("/")
 def home():
-	return "Hello, world!"
+	print("in home")
+	return "You are in Flask app for bot detection API"
 
-app.run(port=5000, debug=True) # debug=True -> if there is an error, it will show on the screen
+if __name__ == '__main__':
+	app.run(port=5000, debug=True) # debug=True -> if there is an error, it will show on the screen
