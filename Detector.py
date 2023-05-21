@@ -152,6 +152,10 @@ def detect_user(username):
     meta = get_metadata(username)
     return model_predict_if_user_is_bot(load_model(), meta)
 
+def detect_user_model(model, username):
+    meta = get_metadata(username)
+    return model_predict_if_user_is_bot(model, meta)
+
 
 # meta = get_metadata("YairNetanyahu")
 # print(model_predict_if_user_is_bot(load_model(), meta))

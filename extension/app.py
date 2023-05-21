@@ -1,6 +1,9 @@
 import sys
 sys.path.append('../Twitter-Bot-Detector')
 from Detector import detect_user
+from Detector import detect_user_model
+from Detector import load_model
+
 from flask import Flask
 from flask import jsonify, make_response
 from flask_cors import CORS
@@ -10,12 +13,14 @@ app = Flask(__name__)
 # To avoid  No 'Access-Control-Allow-Origin' header is present on the requested resource.
 CORS(app)
 
+model = load_model() # load the model once
+
 @app.route("/isBot/<string:username>/")
 def is_bot(username):
-	print("in backend for: ", username)
+    print("in backend for: ", username)
 	# The return value from a function in a Flask app should be JSON serializable.
-	result = 0 if detect_user(username) else 1
-	return jsonify({username: result})
+    result = 1 if detect_user_model(model, username) else 0 # 1 - bot, 0 - not bot
+    return jsonify({username: result})
 
 @app.route("/")
 def home():
