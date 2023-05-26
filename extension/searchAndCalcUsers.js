@@ -4,8 +4,14 @@ const usernameClass = 'span.css-901oao.css-16my406.r-poiln3.r-bcqeeo.r-qvutc0';
 // Every mutation will be filled and then erased
 var mutationDict = {};
 // Main dictonary, will be filled with users
-var usernamesMainDict ={};
+var usernamesMainDict = {};
+// In every X seconds we will copy mutationDict to usersOnRequestDict and run makeRequest on users, the results will be there
+var usersOnRequestDict = {};
+var countId = 0;
 
+var inMutation = false;
+var inIntervals = false;
+var interval = 10000;
 // Const for bot/human/ not calculated yet-unknown 
 const unknown = -1;
 const bot = 1;
@@ -13,64 +19,160 @@ const human = 0;
 
 
 
-// function to create the bot_image element
+/* ============================ "MAIN" ============================ */
+// Create a new MutationObserver instance
+const observer = new MutationObserver(handleMutation);
+setObserver();
+setInterval(async () => {
+                        await intervalFunc();
+                        }, interval);
+
+
+/**
+ * Sets the observer which is seeking for document changes and get new usernames
+ */
+function setObserver(){
+    // Start observing the desired DOM changes
+    observer.observe(document, {childList: true, 
+                                subtree: true,
+                                classList: true });
+}
+
+/**
+ * Runs every @interval seconds.
+ * This function calls setRequestDict() to get the users that we collected until this time,
+ * and then calls makeRequests() to cllassify each user by running the model.
+ * Eventually set "bot sign" near every user that is detected as bot.
+ */
+async function intervalFunc(){
+    // Make sure intervalFunc not runs in previous interval
+    if (!inIntervals) {
+        inIntervals = true;
+        
+        // Get users - set usersOnRequestDict
+        setRequestDict();
+
+        if (Object.keys(usersOnRequestDict).length)
+        {
+            // Classify each user
+            await makeRequests();
+            // Set signs of bots
+            setSigns();
+        }
+
+        // Make sure next function is ruuning 
+        inIntervals = false;
+    }
+}
+
+/**
+ * Copys mutationDict to usersOnRequestDict (all the collected user till this time),
+ * make sure to stop observsion and wait for it to end if needed.
+ */
+function setRequestDict(){
+    // Stop observer until we finish copy the dict
+    observer.disconnect(document);
+    console.log(mutationDict);
+    while (inMutation)
+    {
+        console.log("wait... in mutation");
+    }
+    // Copy mutation dict
+    usersOnRequestDict = {...mutationDict};
+    mutationDict = {};
+    setObserver();
+}
+
+/**
+ * Pass over usersOnRequestDict, for each bot user- adds a sign near the matching elementId.
+ */
+function setSigns(){
+    for (var user in usersOnRequestDict){
+        if (usernamesMainDict[user] == bot && usersOnRequestDict[user].length){
+            for (var elementCountId in usersOnRequestDict[user]){
+                addSign(user + elementCountId);
+            }
+        }
+    }
+}
+
+/**
+ * Creates bot_image element
+ */
 function createBotImage() {
     var imgElement = document.createElement('img');
-    imgElement.src = 'img/bot.png'
-    imgElement.style.width = '18px';
-    imgElement.style.height = '18px';
+    //imgElement.src = 'img/bot.png'
+    imgElement.src = 'https://miro.medium.com/v2/resize:fit:700/1*u237xTTUp6m6JKQ14b5oGQ.png'
+    imgElement.style.width = '23px';
+    imgElement.style.height = '23px';
     return imgElement; 
 }
 
+/**
+ * Adds bot sign near username.
+ * @param {string} elementId - the id of the element we want to add bot sign near.
+ */
 // Sign of bot, will be added to each suspected bot
 // function that its input is string username. and it find the element with id = username and puts the imgElement near it
-function addSign(user) {    
-    var usernameElement = document.getElementById(user);
+function addSign(elementId) {  
+    var usernameElement = document.getElementById(elementId);
     if (usernameElement) { 
         var imgElement = createBotImage();
-        usernameElement.parentNode.insertBefore(imgElement, usernameElement.nextSibling); // upload the image
+        usernameElement.parentNode.insertBefore(imgElement, usernameElement.nextSibling); // Upload the image
 
         // TODO: make the image appear (the upper lines) and delete the lower lines
+        /*
         // make the username bold and red and writ "-bot" near it
         usernameElement.style.fontWeight = 'bold';
         usernameElement.style.color = 'red';
-        usernameElement.textContent = usernameElement.textContent + '-bot';
+        usernameElement.textContent = usernameElement.textContent + '-bot';*/
     }
     else {
-        console.log(`usernameElement is null for ${user}`);
+        console.log(`usernameElement is null for ${usernameElement}`);
     }
 }
 
-/* TODO: Think about making the API request get bunch of users*/
-function makeRequest(users) {
-    users.forEach( async user => {
-        if (!(user in usernamesMainDict)){
-
-            // sleep for 5 seconds
-            await new Promise(r => setTimeout(r, 5000));
-
-
-            fetch(`http://127.0.0.1:5000/isBot/${user}`)
-            .then(response => response.json())
-            .then(data => {
+/**
+ * Sends API request for every user in usersOnRequestDict(keys) and classify the users.
+ * TODO: Think about making the API request get bunch of users
+ */
+async function makeRequests() {
+    
+    for (var user in usersOnRequestDict) {
+        if (!(user in usernamesMainDict)) {
+            try {
+                // API request for detect human/bot (runs the model on username)
+                const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
+                const data = await response.json();
                 console.log(`calculated ${user}, got result: ${data[user]}`);
                 usernamesMainDict[user] = data[user];
-                mutationDict[user] = data[user]; // because we want to add the bot sign to the new users in the mutation
-                console.log(usernamesMainDict);
-            })
-            .catch(error => {
+
+            } catch (error) {
                 console.log(`error for ${user}`);
-            });
+            }
         }
         else {
+            // TODO: Check if possibole
             console.log(`${user} is already calculated`);
+            if (usersOnRequestDict[user].length) {
+                for (var elementCountId in usersOnRequestDict[user]) {
+                    addSign(user + elementCountId);
+                }
+            }
+            delete usersOnRequestDict[user];
         }
-    });
+    }
 }
 
-/*Function to handle the mutation:
-    Pass over any mutation and get the username- from usernameClass and starts with @*/ 
+/**
+ * Handles mutations: Pass over any mutation and get the new usernames on screen- from usernameClass 
+ * and starts with @.
+ * @param {List} mutations 
+ */
 function handleMutation(mutations) {
+
+    inMutation = true;
+
     // mutations is a list of mutation
     mutations.forEach(function (mutation) {
         // If there is at least 1 added node
@@ -85,37 +187,36 @@ function handleMutation(mutations) {
                     mutationUsernames.forEach(usernameSpan => { 
                         // delete "@"
                         username = usernameSpan.textContent.substring(1);
-                        mutationDict[username] = unknown;
-                        
-                        // TODO: Tamir I did it just for test need to think of other idea or elaborate this one
-                        usernameSpan.id = username;
+
+                        // User is already classified
+                        if (username in usernamesMainDict && usernamesMainDict[username] == bot){
+                            addSign(usernameSpan.id);
+                        }
+                        else
+                        { // User not classified yet
+                            usernameSpan.id = username + countId;
+
+                            // When the classification is ready- set the sign near this id (element)
+                            if (username in mutationDict){
+                                // User is waiting for classification
+                                mutationDict[username][mutationDict[username].length] = countId;
+                            }
+                            else {// User is NOT waiting for classification
+                                mutationDict[username] = [countId];
+                            }
+                            countId++;
+                        }
                     });
                 }
             }
         }
     });
-
-    // Get users of current mutation
-    const mutationUsers = Object.keys(mutationDict); // mutationUsers is an array of usernames strings
-    if (mutationUsers.length) {
-        // calculate if users bots/not with API requests
-        makeRequest(mutationUsers);
-    }
-    // get all usernames that are bots in current mutation
-    const mutationBots = mutationUsers.filter(username => mutationDict[username] === bot);
-    // for every bot in current mutation add bot sign
-    mutationBots.forEach(bot => addSign(bot));
-    // Clear mutationDict
-    mutationDict = {};
+    
+    inMutation = false;
 }
-  
-// Create a new MutationObserver instance
-const observer = new MutationObserver(handleMutation);
-  
-// Start observing the desired DOM changes
-observer.observe(document, {childList: true, 
-                            subtree: true,
-                            classList: true });
+
+
+
 
 /*if (mutation.type === 'childList') {
         for (let addedNode of mutation.addedNodes) {
