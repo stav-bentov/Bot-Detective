@@ -101,8 +101,8 @@ function setSigns(){
  */
 function createBotImage() {
     var imgElement = document.createElement('img');
-    //imgElement.src = 'img/bot.png'
-    imgElement.src = 'https://miro.medium.com/v2/resize:fit:700/1*u237xTTUp6m6JKQ14b5oGQ.png'
+    //imgElement.src = 'https://miro.medium.com/v2/resize:fit:700/1*u237xTTUp6m6JKQ14b5oGQ.png';
+    imgElement.src = 'https://i.imgur.com/D2uoogs.png';
     imgElement.style.width = '23px';
     imgElement.style.height = '23px';
     return imgElement; 
@@ -119,13 +119,6 @@ function addSign(elementId) {
     if (usernameElement) { 
         var imgElement = createBotImage();
         usernameElement.parentNode.insertBefore(imgElement, usernameElement.nextSibling); // Upload the image
-
-        // TODO: make the image appear (the upper lines) and delete the lower lines
-        /*
-        // make the username bold and red and writ "-bot" near it
-        usernameElement.style.fontWeight = 'bold';
-        usernameElement.style.color = 'red';
-        usernameElement.textContent = usernameElement.textContent + '-bot';*/
     }
     else {
         console.log(`usernameElement is null for ${usernameElement}`);
