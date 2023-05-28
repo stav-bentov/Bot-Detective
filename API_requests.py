@@ -29,4 +29,4 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-uvicorn.run(app, host="0.0.0.0", port=3003, ssl_keyfile="./key.pem", ssl_certfile="./cert.pem")
+uvicorn.run(app, host="0.0.0.0", port=3003, ssl_keyfile="./34.165.68.249-key.pem", ssl_certfile="./34.165.68.249.pem")
