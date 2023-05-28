@@ -6,6 +6,7 @@
     "version": "1.0",
     "permissions": [
         "http://127.0.0.1/*",
+        "https://34.165.68.249/*",
         "activeTab",
         "tabs"
     ],

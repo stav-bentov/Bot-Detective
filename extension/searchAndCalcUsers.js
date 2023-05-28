@@ -136,9 +136,12 @@ async function makeRequests() {
             // API request for detect human/bot (runs the model on username)
 
             // For FastAPI
-            const response = await fetch(`http://127.0.0.1:8000/isBot/${user}`);
+            // const response = await fetch(`http://127.0.0.1:8000/isBot/${user}`);
             // For Flask
             //const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
+            // For TAMIR - VM Flask
+            const response = await fetch(`https://34.165.68.249:5000/isBot/${user}`);
+
             
             const data = await response.json();
             console.log(`calculated ${user}, got result: ${data[user]}`);
