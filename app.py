@@ -1,5 +1,3 @@
-import sys
-sys.path.append('../Twitter-Bot-Detector')
 from Detector import detect_user
 from Detector import detect_user_model
 from Detector import load_model
