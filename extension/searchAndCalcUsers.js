@@ -11,7 +11,7 @@ var countId = 0;
 
 var inMutation = false;
 var inIntervals = false;
-var interval = 10000;
+var interval = 3000;
 // Const for bot/human/ not calculated yet-unknown 
 const unknown = -1;
 const bot = 1;
@@ -170,8 +170,11 @@ function handleMutation(mutations) {
 
                         // User is already classified
                         if (username in usernamesMainDict) {
-                            if (usernamesMainDict[username] == bot)
+                            console.log(`${username} is already calculated and got: ${usernamesMainDict[username]}`);
+                            if (usernamesMainDict[username] == bot) {
                                 addSign(usernameSpan.id);
+                                console.log("user is already calculated");
+                            }
                         }
                         else
                         { // User not classified yet
