@@ -26,4 +26,4 @@ def home():
 	return "You are in Flask app for bot detection API"
 
 if __name__ == '__main__':
-	app.run(port=5000, debug=True) # debug=True -> if there is an error, it will show on the screen
+	app.run(port=5000, host='0.0.0.0', debug=True) # debug=True -> if there is an error, it will show on the screen
