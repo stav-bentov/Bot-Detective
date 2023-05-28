@@ -134,7 +134,12 @@ async function makeRequests() {
     for (var user in usersOnRequestDict) {
         try {
             // API request for detect human/bot (runs the model on username)
-            const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
+
+            // For FastAPI
+            const response = await fetch(`http://127.0.0.1:8000/isBot/${user}`);
+            // For Flask
+            //const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
+            
             const data = await response.json();
             console.log(`calculated ${user}, got result: ${data[user]}`);
             usernamesMainDict[user] = data[user];
