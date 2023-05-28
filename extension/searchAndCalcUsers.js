@@ -70,6 +70,7 @@ async function intervalFunc(){
  * make sure to stop observsion and wait for it to end if needed.
  */
 function setRequestDict(){
+    // TODO: Check if we miss usernames between disconnect
     // Stop observer until we finish copy the dict
     observer.disconnect(document);
     console.log(mutationDict);
@@ -88,7 +89,7 @@ function setRequestDict(){
  */
 function setSigns(){
     for (var user in usersOnRequestDict){
-        if (usernamesMainDict[user] == bot && usersOnRequestDict[user].length){
+        if (usernamesMainDict[user] == bot) {
             for (var elementCountId in usersOnRequestDict[user]){
                 addSign(user + elementCountId);
             }
@@ -130,29 +131,15 @@ function addSign(elementId) {
  * TODO: Think about making the API request get bunch of users
  */
 async function makeRequests() {
-    
     for (var user in usersOnRequestDict) {
-        if (!(user in usernamesMainDict)) {
-            try {
-                // API request for detect human/bot (runs the model on username)
-                const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
-                const data = await response.json();
-                console.log(`calculated ${user}, got result: ${data[user]}`);
-                usernamesMainDict[user] = data[user];
-
-            } catch (error) {
-                console.log(`error for ${user}`);
-            }
-        }
-        else {
-            // TODO: Check if possibole
-            console.log(`${user} is already calculated`);
-            if (usersOnRequestDict[user].length) {
-                for (var elementCountId in usersOnRequestDict[user]) {
-                    addSign(user + elementCountId);
-                }
-            }
-            delete usersOnRequestDict[user];
+        try {
+            // API request for detect human/bot (runs the model on username)
+            const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
+            const data = await response.json();
+            console.log(`calculated ${user}, got result: ${data[user]}`);
+            usernamesMainDict[user] = data[user];
+        } catch (error) {
+            console.log(`error for ${user}`);
         }
     }
 }
@@ -182,8 +169,9 @@ function handleMutation(mutations) {
                         username = usernameSpan.textContent.substring(1);
 
                         // User is already classified
-                        if (username in usernamesMainDict && usernamesMainDict[username] == bot){
-                            addSign(usernameSpan.id);
+                        if (username in usernamesMainDict) {
+                            if (usernamesMainDict[username] == bot)
+                                addSign(usernameSpan.id);
                         }
                         else
                         { // User not classified yet
