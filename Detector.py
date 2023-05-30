@@ -33,7 +33,7 @@ def likelihood(str: str) -> float:
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
 
-client = tweepy.Client(bearer_token)
+client = tweepy.Client(bearer_token, wait_on_rate_limit = True)
 default_image_url = "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
 
 # Define calculation of every feature [User will be response.data]
