@@ -89,12 +89,12 @@ def model_predict_if_user_is_bot(model, user_metadata):
         Input: 1) model. 2) user_metadata = a dictonary with features as keys and their corresponding values of the username
         Returns: 1 - bot, 0 - human
     """
-    # create a dataframe with the user_metadata
+    # Create a dataframe with the user_metadata
     df_user_data = pd.DataFrame(user_metadata, index=[0]) 
 
-    # predict the target
-    prediction = model.predict(df_user_data) # prediction [(0/1),...,] is list of predictions for many users, we only have 1 user
-    return prediction[0] == 1 # return True if the user is a bot
+    # Predict the target
+    prediction = model.predict(df_user_data) # Prediction [(0/1),...,] is list of predictions for many users, we only have 1 user
+    return prediction[0] # Return 1 if the user is a bot else- 0
 
 def get_liked_tweets(user_id):
     """
@@ -107,55 +107,56 @@ def get_liked_tweets(user_id):
         return len(response.data)
     return 0
 
-def get_metadata(username):
+def get_features(response_data):
     """
-        Input: gets username
+        Input: gets a dictonary with all metadata of current username
         Returns: a dictonary with features as keys and their corresponding values of the username
     """
     user_metadata = {}
-    user_fields_param = ["name", "created_at", "description", "verified", "profile_image_url", "public_metrics", "id"]
-    
-    # Creates a request with get_user - get response object which contains user object by username
-    response = client.get_user(username = username, user_fields = user_fields_param)
-
     # Get the metadata from response.data and add to user_metadata
     for data in user_metadata_names:
-        user_metadata[data] = calculations[data](response.data)
+        user_metadata[data] = calculations[data](response_data)
 
     # Calculate user_age for next features
     probe_time = datetime.now().replace(microsecond=0)
-    created_at = response.data["created_at"].replace(tzinfo=None)
+    created_at = datetime.fromisoformat(response_data["created_at"][:-1]).replace(tzinfo=None)
     user_age = calculations["user_age"](probe_time, created_at)
 
     # Add derived features to user_metadata
     for feature, calc in user_derived_features.items():
         num_variables = calc[0]
         calc_function = calc[-1]
-        x1 = calculations[calc[1]](response.data)
+        x1 = calculations[calc[1]](response_data)
         if (num_variables == 1):
             user_metadata[feature] = calc_function(x1)
         else: #else- num_variables == 2
             # max- Take care of a case where x2 = 0 (will get a devision by 0)
-            x2 = max (user_age if calc[2] == "user_age" else calculations[calc[1]](response.data), 1)
+            x2 = max (user_age if calc[2] == "user_age" else calculations[calc[1]](response_data), 1)
             user_metadata[feature] = calc_function(x1, x2)
 
     return user_metadata
 
 def detect_users(users):
-    res = []
-    for username in users:
-        meta = get_metadata(username)
-        res.append(model_predict_if_user_is_bot(load_model(), meta))
+    
+    user_fields_param = ["name", "created_at", "description", "verified", "profile_image_url", "public_metrics", "id"]
+    
+    # Creates a request with get_user - get response object which contains user object by username
+    users_response = client.get_users(usernames = users, user_fields = user_fields_param)
+    res = {}
+    for response in users_response.data:
+        meta = get_features(response.data)
+        res[response["username"]] = model_predict_if_user_is_bot(load_model(), meta)
     return res
 
 def detect_user(username):
-    meta = get_metadata(username)
+    meta = get_features(username)
     return model_predict_if_user_is_bot(load_model(), meta)
 
 def detect_user_model(model, username):
-    meta = get_metadata(username)
+    meta = get_features(username)
     return model_predict_if_user_is_bot(model, meta)
 
-
+#result = detect_users(["YairNetanyahu", "stav_1234"])
+#print(result)
 # meta = get_metadata("YairNetanyahu")
 # print(model_predict_if_user_is_bot(load_model(), meta))

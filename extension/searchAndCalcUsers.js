@@ -131,26 +131,25 @@ function addSign(elementId) {
  * TODO: Think about making the API request get bunch of users
  */
 async function makeRequests() {
-    for (var user in usersOnRequestDict) {
-        try {
-            // API request for detect human/bot (runs the model on username)
+    try {
+        // API request for detect human/bot (runs the model on username)
 
-            // For FastAPI
-            // const response = await fetch(`http://127.0.0.1:8000/isBot/${user}`);
-            // For Flask
-            //const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
-            // For TAMIR - VM Flask
-            // const response = await fetch(`https://34.165.68.249:3003/isBot/${user}`);
-            // For FastAPI - VM FastAPI
-            const response = await fetch(`https://34.165.68.249:3003/isBot/${user}`);
+        // For FastAPI
+        const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
+        // For Flask
+         //const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
+        // For TAMIR - VM Flask
+        // const response = await fetch(`https://34.165.68.249:3003/isBot/${user}`);
+        // For FastAPI - VM FastAPI
+        //const response = await fetch(`https://34.165.1.66:3003/isBot/${user}`);
 
             
-            const data = await response.json();
-            console.log(`calculated ${user}, got result: ${data[user]}`);
-            usernamesMainDict[user] = data[user];
-        } catch (error) {
-            console.log(`error for ${user}`);
-        }
+        const data = await response.json();
+        //console.log(`calculated ${user}, got result: ${data[user]}`);
+        console.log(`RESULTS: ${data}`);
+        //usernamesMainDict[user] = data[user];
+    } catch (error) {
+        console.log(`error`);
     }
 }
 
