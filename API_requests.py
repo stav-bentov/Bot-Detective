@@ -16,12 +16,10 @@ def read_root():
 
 @app.get("/isBot/{usernames_str}")
 async def is_bot(usernames_str: str):
-    #print("in backend for: ", usernames_str)
     usernames_list = usernames_str.split(",")
-    print("usernames_list: ", usernames_list)
 	# The return value from a function in a Flask/FastAPI app should be JSON serializable.
     result = detect_users_model(model, usernames_list)
-    
+    print(result)
     return result
 
 #app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS

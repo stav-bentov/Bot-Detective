@@ -161,7 +161,6 @@ def detect_users_model(model, users):
     # Creates a request with get_user - get response object which contains user object by username
     users_response = client.get_users(usernames = users, user_fields = user_fields_param)
     res = {}
-    print("user_responses.data = ", users_response.data)
     
     for response in users_response.data:
         meta = get_features(response.data)

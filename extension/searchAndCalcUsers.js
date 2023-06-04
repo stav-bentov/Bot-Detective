@@ -145,9 +145,12 @@ async function makeRequests() {
 
             
         const data = await response.json();
-        //console.log(`calculated ${user}, got result: ${data[user]}`);
-        console.log(`RESULTS: ${data}`);
-        //usernamesMainDict[user] = data[user];
+        
+        // read the result from the response
+        for (var user in data){
+            console.log(`calculated ${user}, got result: ${data[user]}`);
+            usernamesMainDict[user] = data[user]
+        }
     } catch (error) {
         console.log(`error`);
     }
