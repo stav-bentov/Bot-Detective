@@ -33,7 +33,7 @@ def likelihood(str: str) -> float:
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
 
-client = tweepy.Client(bearer_token, wait_on_rate_limit = True)
+client = tweepy.Client(bearer_token, wait_on_rate_limit = True) #,timeout = 3000)
 default_image_url = "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
 
 # Define calculation of every feature [User will be response.data]
@@ -94,7 +94,7 @@ def model_predict_if_user_is_bot(model, user_metadata):
 
     # Predict the target
     prediction = model.predict(df_user_data) # Prediction [(0/1),...,] is list of predictions for many users, we only have 1 user
-    return prediction[0] # Return 1 if the user is a bot else- 0
+    return int(prediction[0]) # Return 1 if the user is a bot else- 0
 
 def get_liked_tweets(user_id):
     """
@@ -137,7 +137,6 @@ def get_features(response_data):
     return user_metadata
 
 def detect_users(users):
-    
     user_fields_param = ["name", "created_at", "description", "verified", "profile_image_url", "public_metrics", "id"]
     
     # Creates a request with get_user - get response object which contains user object by username
@@ -155,6 +154,19 @@ def detect_user(username):
 def detect_user_model(model, username):
     meta = get_features(username)
     return model_predict_if_user_is_bot(model, meta)
+
+def detect_users_model(model, users):
+    user_fields_param = ["name", "created_at", "description", "verified", "profile_image_url", "public_metrics", "id"]
+    
+    # Creates a request with get_user - get response object which contains user object by username
+    users_response = client.get_users(usernames = users, user_fields = user_fields_param)
+    res = {}
+    print("user_responses.data = ", users_response.data)
+    
+    for response in users_response.data:
+        meta = get_features(response.data)
+        res[response['username']] = model_predict_if_user_is_bot(model, meta)
+    return res
 
 #result = detect_users(["YairNetanyahu", "stav_1234"])
 #print(result)

@@ -139,7 +139,7 @@ async function makeRequests() {
         // For Flask
          //const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
         // For TAMIR - VM Flask
-        // const response = await fetch(`https://34.165.68.249:3003/isBot/${user}`);
+        // const response = await fetch(`https://34.165.1.66:3003/isBot/${user}`);
         // For FastAPI - VM FastAPI
         //const response = await fetch(`https://34.165.1.66:3003/isBot/${user}`);
 
