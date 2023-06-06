@@ -102,8 +102,10 @@ function setSigns(){
  */
 function createBotImage() {
     var imgElement = document.createElement('img');
-    //imgElement.src = 'https://miro.medium.com/v2/resize:fit:700/1*u237xTTUp6m6JKQ14b5oGQ.png';
-    imgElement.src = 'https://i.imgur.com/D2uoogs.png';
+    // Grey bot
+    //imgElement.src = 'https://i.imgur.com/D2uoogs.png';
+    // Red bot
+    imgElement.src = 'https://ibb.co/YR3XJg7';
     imgElement.style.width = '23px';
     imgElement.style.height = '23px';
     return imgElement; 
