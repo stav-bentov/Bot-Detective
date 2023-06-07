@@ -3,8 +3,6 @@ const usernameClass = 'span.css-901oao.css-16my406.r-poiln3.r-bcqeeo.r-qvutc0';
 
 // Every mutation will be filled and then erased
 var mutationDict = {};
-// Main dictonary, will be filled with users
-var usernamesMainDict = {};
 // In every X seconds we will copy mutationDict to usersOnRequestDict and run makeRequest on users, the results will be there
 var usersOnRequestDict = {};
 var countId = 0;
@@ -17,7 +15,26 @@ const unknown = -1;
 const bot = 1;
 const human = 0;
 
+/* For each user saved in this session, we aim to retain their data for a maximum of 30 days (when date= deletetionDate + 30).
+ After that period, the data will be deleted, and recalculation will be necessary.*/
+const currentDate = new Date();
+const  expirationDate = new Date();
+expirationDate .setDate(expirationDate .getDate() + 30);
+console.log(`currentDate: ${currentDate}`);
+console.log(`expirationDate: ${expirationDate}`);
 
+/* An object that will be used for each user's value in the local storage- need to update classification*/
+let userInStorage = {
+    classification: unknown,
+    expiration: expirationDate,
+};
+
+/* Checking local storage*/
+if (typeof(Storage) !== "undefined") {
+    console.log("Code for localStorage/sessionStorage.");
+} else {
+    console.log("Sorry! No Web Storage support..");
+}
 
 /* ============================ "MAIN" ============================ */
 // Create a new MutationObserver instance
@@ -89,7 +106,7 @@ function setRequestDict(){
  */
 function setSigns(){
     for (var user in usersOnRequestDict){
-        if (usernamesMainDict[user] == bot) {
+        if (checkAvailabilityAndExpiration(user) == bot) {
             for (var elementCountId in usersOnRequestDict[user]){
                 addSign(user + elementCountId);
             }
@@ -105,7 +122,7 @@ function createBotImage() {
     // Grey bot
     //imgElement.src = 'https://i.imgur.com/D2uoogs.png';
     // Red bot
-    imgElement.src = 'https://ibb.co/YR3XJg7';
+    imgElement.src = 'https://i.imgur.com/haGW0N6.png';
     imgElement.style.width = '23px';
     imgElement.style.height = '23px';
     return imgElement; 
@@ -118,6 +135,7 @@ function createBotImage() {
 // Sign of bot, will be added to each suspected bot
 // function that its input is string username. and it find the element with id = username and puts the imgElement near it
 function addSign(elementId) {  
+    console.log(`in add sign for ${elementId}`);
     var usernameElement = document.getElementById(elementId);
     if (usernameElement) { 
         var imgElement = createBotImage();
@@ -139,7 +157,7 @@ async function makeRequests() {
         // For FastAPI
         const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
         // For Flask
-         //const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
+        //const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
         // For TAMIR - VM Flask
         // const response = await fetch(`https://34.165.1.66:3003/isBot/${user}`);
         // For FastAPI - VM FastAPI
@@ -150,12 +168,32 @@ async function makeRequests() {
         
         // read the result from the response
         for (var user in data){
-            console.log(`calculated ${user}, got result: ${data[user]}`);
-            usernamesMainDict[user] = data[user]
+            userInStorage.classification = data[user];
+            localStorage.setItem(user, JSON.stringify(userInStorage));
         }
     } catch (error) {
         console.log(`error`);
     }
+}
+
+/**
+ * Check if user is saved in local storage and up to date, if it is- return the classification, else- return null
+ * @param {String} user 
+ */
+function checkAvailabilityAndExpiration(user) {
+    const userStorageValue = localStorage.getItem(user);
+    // User classification is done and saved in local storage
+    if (userStorageValue != null) {
+        userDict = JSON.parse(userStorageValue);
+        // User classification is not up to date
+        if (currentDate > userDict.expiration) {
+            localStorage.removeItem(user);
+            return null;
+        }
+        // Else- the user classification is avaliable and up to date return the result
+        return userDict.classification;
+    }
+    return null;
 }
 
 /**
@@ -183,16 +221,17 @@ function handleMutation(mutations) {
                         username = usernameSpan.textContent.substring(1);
 
                         // User is already classified
-                        if (username in usernamesMainDict) {
-                            console.log(`${username} is already calculated and got: ${usernamesMainDict[username]}`);
-                            if (usernamesMainDict[username] == bot) {
+                        // If user classification is saved in local storage and up to date- use it
+                        let userResult;
+                        usernameSpan.id = username + countId;
+                        if (userResult = checkAvailabilityAndExpiration(username)) {
+                            console.log(`${username} is already calculated and got: ${userResult}`);
+                            if (userResult == bot) {
                                 addSign(usernameSpan.id);
-                                console.log("user is already calculated");
                             }
                         }
                         else
                         { // User not classified yet
-                            usernameSpan.id = username + countId;
 
                             // When the classification is ready- set the sign near this id (element)
                             if (username in mutationDict){
@@ -202,8 +241,8 @@ function handleMutation(mutations) {
                             else {// User is NOT waiting for classification
                                 mutationDict[username] = [countId];
                             }
-                            countId++;
                         }
+                        countId++;
                     });
                 }
             }
