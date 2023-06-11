@@ -8,6 +8,10 @@ from sklearn.calibration import LinearSVC
 import numpy as np
 
 def grid_search_nb(X, Y):
+    """
+        Input: Gets data and classification.
+        Output: Results of grid search with Gaussian NB.
+    """
     nb = GaussianNB()
     grid_space={
         'var_smoothing': np.logspace(0,-9, num=100)
@@ -21,7 +25,10 @@ def grid_search_nb(X, Y):
     return model_grid.best_score_
 
 def grid_search_rf(X, Y):
-    print("in rf")
+    """
+        Input: Gets data and classification.
+        Output: Results of grid search with Random Forest.
+    """
     rf = RandomForestClassifier()
     grid_space= {'n_estimators': [100, 200, 300, 400, 500], 
                  'max_depth': [5, 10, 15, 20], 
@@ -36,6 +43,10 @@ def grid_search_rf(X, Y):
     return model_grid.best_score_
 
 def grid_search_lsvc(X, Y):
+    """
+        Input: Gets data and classification.
+        Output: Results of grid search with linearSVC.
+    """
     param_grid_linearSVC = { 'C': [0.1, 1, 10, 100, 1000], 'max_iter': [3000, 4000, 5000]}
     # Create a based model
     linearSVC = LinearSVC(random_state = 1)
@@ -53,6 +64,10 @@ def grid_search_lsvc(X, Y):
     return model_grid.best_score_
 
 def find_best_model(X, Y):
+    """
+        Input: Gets data and classification.
+        Output: Print the best model (highest accuracy) on the data.
+    """
     models = {}
     models["Gaussian Naive Bayes"] = grid_search_nb(X, Y)
     print("Done Gaussian Naive Bayes")
@@ -69,25 +84,26 @@ def create_and_save_model():
         Generate the model according to the collected dataset in 'Datasets/all_df.csv'
         and returns it
     """
-    # read the data
+    # Reada the data
     df = pd.read_csv('Datasets/all_df.csv')
 
-    # split features and target
+    # Splita features and target
     X = df.drop('target', axis=1)
     Y = df['target']
     
     #find_best_model(X, Y)
     #grid_search_rf(X, Y)
-    # train the model
+
+    # Trains the model
     model = RandomForestClassifier(n_estimators = 200, max_depth = 5, random_state = 1)
     model.fit(X, Y)
 
-    # calc 5 fold cross validation test
+    # Calculates 5 fold cross validation test
     scores = cross_val_score(model, X, Y, cv = 5)
     print("cross validation scores: ", scores.mean()) # scores.mean() = 0.962
 
-    # save the model
+    # Savea the model
     with open('detector_model.pkl', 'wb') as f: # wb = write binary
-        pickle.dump(model, f) # save the model in the file
+        pickle.dump(model, f) # Save the model in the file
 
 create_and_save_model()

@@ -7,27 +7,7 @@ import pandas as pd
 from nltk.util import bigrams
 from collections import Counter
 import math
-
-def likelihood(str: str) -> float:
-    """
-        Input: string (screen_name/ name)
-        Returns: The likelihood of the given string.
-                 likelihood is defined by the geometric-mean likelihood of all bigrams in it.
-    """
-    # Create a list of all bigrams in str
-    bigrams_list = list(bigrams(str))
-    # Create a Dictonary with each bigram frequency
-    bigrams_likelihood = Counter(bigrams_list)
-
-    # Calculte number of all bigrams and number of different bigrams
-    num_bigrams = len(bigrams_list)
-    num_dif_bigrams = len(bigrams_likelihood)
-    
-    biagrams_mul = math.prod([value * (1/num_bigrams) for value in bigrams_likelihood.values()])
-
-    # geometric-mean defenition
-    return math.pow(biagrams_mul , (1/num_dif_bigrams))
-
+import time
 
 # ========================================== Define variables ========================================== #
 sys.stdin.reconfigure(encoding='utf-8')
@@ -56,10 +36,10 @@ calculations = {"statuses_count": lambda User: User["public_metrics"]["tweet_cou
                 "user_age": lambda probe_time, created_at: (probe_time - created_at).total_seconds() / 3600 
                 }
 
-# exsiting metadata
+# Exsiting metadata
 user_metadata_names = ["statuses_count", "followers_count","friends_count","favourites_count","listed_count","profile_use_background_image","verified"]
 
-# calculted features
+# Calculted features
 user_derived_features = {"tweet_freq": [2, "statuses_count", "user_age", calculations["division"]],
                          "followers_growth_rate": [2, "followers_count", "user_age", calculations["division"]],
                          "friends_growth_rate": [2, "friends_count", "user_age", calculations["division"]],
@@ -73,14 +53,36 @@ user_derived_features = {"tweet_freq": [2, "statuses_count", "user_age", calcula
                          "description_length": [1, "description", calculations["length"]],
                          "screen_name_likelihood": [1, "screen_name", calculations["likelihood"]]}
 
+# =============================================================================================== #
 # ========================================== Functions ========================================== #
+# =============================================================================================== #
+
+def likelihood(str: str) -> float:
+    """
+        Input: string (screen_name/ name)
+        Returns: The likelihood of the given string.
+                 likelihood is defined by the geometric-mean likelihood of all bigrams in it.
+    """
+    # Create a list of all bigrams in str
+    bigrams_list = list(bigrams(str))
+    # Create a Dictonary with each bigram frequency
+    bigrams_likelihood = Counter(bigrams_list)
+
+    # Calculte number of all bigrams and number of different bigrams
+    num_bigrams = len(bigrams_list)
+    num_dif_bigrams = len(bigrams_likelihood)
+    
+    biagrams_mul = math.prod([value * (1/num_bigrams) for value in bigrams_likelihood.values()])
+
+    # geometric-mean defenition
+    return math.pow(biagrams_mul , (1/num_dif_bigrams))
 
 def load_model():
     """
-        Load the model from detector_model.pkl
+        Loads the model from detector_model.pkl
     """
     with open('detector_model.pkl', 'rb') as f: # rb = read binary
-        model = pickle.load(f) # load the model from the file
+        model = pickle.load(f) # Load the model from the file
     return model
 
 # TODO: later on, consider making a function for prediction of bunch of users
@@ -137,14 +139,28 @@ def get_features(response_data):
     return user_metadata
 
 def detect_users(users):
+    """
+        Input: users- a list of usernames
+        Returns: a dictonary with keys: usernames, values: user's classification (bot = 1, human = 0)
+    """
     user_fields_param = ["name", "created_at", "description", "verified", "profile_image_url", "public_metrics", "id"]
     
-    # Creates a request with get_user - get response object which contains user object by username
-    users_response = client.get_users(usernames = users, user_fields = user_fields_param)
+    # client.get_users can get up to 100 users in a single request.
+    req_max_size = 100
     res = {}
-    for response in users_response.data:
-        meta = get_features(response.data)
-        res[response["username"]] = model_predict_if_user_is_bot(load_model(), meta)
+    
+    # client.get_users can get up to 100 users, so we will separate our calls to up to 100
+    for i in range(0, len(users), req_max_size):
+        users_batch = users[i:i + req_max_size]
+
+        # Creates a request with get_user - get response object which contains user object by username
+        # RECALL: client.get_users is synchronous by default
+        users_response = client.get_users(usernames = users_batch, user_fields = user_fields_param)
+        time.sleep(0.5)
+        for response in users_response.data:
+            meta = get_features(response.data)
+            res[response["username"]] = model_predict_if_user_is_bot(load_model(), meta)
+    
     return res
 
 def detect_user(username):
@@ -156,15 +172,28 @@ def detect_user_model(model, username):
     return model_predict_if_user_is_bot(model, meta)
 
 def detect_users_model(model, users):
+    """
+        Input: model- the model that classify our users
+               users- a list of usernames
+        Returns: a dictonary with keys: usernames, values: user's classification (bot = 1, human = 0)
+    """
     user_fields_param = ["name", "created_at", "description", "verified", "profile_image_url", "public_metrics", "id"]
     
-    # Creates a request with get_user - get response object which contains user object by username
-    users_response = client.get_users(usernames = users, user_fields = user_fields_param)
+    # client.get_users can get up to 100 users in a single request.
+    req_max_size = 100
     res = {}
     
-    for response in users_response.data:
-        meta = get_features(response.data)
-        res[response['username']] = model_predict_if_user_is_bot(model, meta)
+    # client.get_users can get up to 100 users, so we will separate our calls to up to 100
+    for i in range(0, len(users), req_max_size):
+        users_batch = users[i:i + req_max_size]
+
+        # Creates a request with get_user - get response object which contains user object by username
+        # RECALL: client.get_users is synchronous by default
+        users_response = client.get_users(usernames = users_batch, user_fields = user_fields_param)
+        for response in users_response.data:
+            meta = get_features(response.data)
+            res[response["username"]] = model_predict_if_user_is_bot(model, meta)
+    
     return res
 
 #result = detect_users(["YairNetanyahu", "stav_1234"])

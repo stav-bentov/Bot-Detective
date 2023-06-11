@@ -7,7 +7,7 @@ from fastapi import FastAPI
 import uvicorn
 import redis
 
-# creating redis storage to store the results of the model from all users ever calculated
+# Creating redis storage to store the results of the model from all users ever calculated
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 model = load_model() # load the model once
@@ -20,33 +20,34 @@ def read_root():
 
 @app.get("/isBot/{usernames_str}")
 async def is_bot(usernames_str: str):
+    result = {}
+
     usernames_list = usernames_str.split(",")
     print("len before remove (usernames_list) = {0}".format(len(usernames_list)))
-    result = {}
-    # update usernames_list to be only the usernames that are not in the redis storage
+
+    # Update usernames_list to be only the usernames that are not in the redis storage
     for username in usernames_list:
-        if r.get(username) is not None: # if the username is in the redis storage
-            result[username] = r.get(username) # get the result from redis storage
-            usernames_list.remove(username) # remove the username from the list of usernames to be calculated
-	# The return value from a function in a Flask/FastAPI app should be JSON serializable.
-    #print("usernames_list = {0}".format(usernames_list))
+        # If the username is in the redis storage:
+        # 1. Get the result from redis storage
+        # 2. Remove the username from the list of usernames that need to be calculated (by the model)
+        print("in loop for: {0}".format(username))
+        if r.get(username) is not None:
+            result[username] = r.get(username) 
+            usernames_list.remove(username) 
     print("len after remove (usernames_list) = {0}".format(len(usernames_list)))
-    if 1 <= len(usernames_list) <= 100:
-        result.update(detect_users_model(model, usernames_list)) 
+    
+    # Calculates users in model and adds to the result
+    if usernames_list:
+        print("usernames_list: {0}".format(usernames_list))
+        result.update(detect_users_model(model, usernames_list))
     else:
         print("error: len(usernames_list) = {0}".format(len(usernames_list)))
-        print("usernames_list = {0}".format(usernames_list))
-        print("can't be more than 100 usernames and less than 1 username")
 
-    # update redis storage with the new usernames and their results
+    # Update redis storage with the **new** usernames and their results
     for username in usernames_list:
-        if username in result:
-            r.set(username, result[username])
-        else:
-            print("error: username =, " + username + "is not in result")
-            print("result = {0}".format(result))
+        print("update redis or:{0}".format(username))
+        r.set(username, result[username])
 
-    #print(result)
     return result
 
 #app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
