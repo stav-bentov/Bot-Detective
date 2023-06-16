@@ -1,4 +1,5 @@
 For metadata we need:
+    Name by the article:            In API v2:                                  Meaning:
 V   1. statuses count               =public_metrics[tweet_count]                The number of Tweets (including retweets) issued by the user.
 V   2. followers count              =public_metrics[followers_count]            The number of followers this account currently has. Under certain conditions of duress, this field will temporarily indicate “0”.
 V   3. friends count                =public_metrics[following_count]            The number of users this account is following (AKA their “followings”). Under certain conditions of duress, this field will temporarily indicate “0”.
@@ -17,5 +18,21 @@ V   5. followers count              =public_metrics[followers_count]
 V   6. listed count                 =public_metrics[listed_count]
 V   7. favourites count             =like_count
 
-TODO:
-1. go over all TODO's
+Extract information from Twitter Page:
+For metadata we need:
+X   1. statuses count               The number of Tweets (including retweets) issued by the user.
+V   2. followers count              The number of followers this account currently has. Under certain conditions of duress, this field will temporarily indicate “0”.
+V   3. friends count                The number of users this account is following (AKA their “followings”). Under certain conditions of duress, this field will temporarily indicate “0”.
+X   4. favourites count             The number of Tweets this user has liked in the account’s lifetime. British spelling used in the field name for historical reasons.
+X   5. listed count                 The number of public lists that this user is a member of.
+X   6. default profile              When true, indicates that the user has not altered the theme or background of their user profile.
+V   7. profile use background image When true, indicates that the user has not uploaded their own profile image and a default image(https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png) is used instead.
+
+For derived features we need:
+V   1. name                         The name of the user, as they’ve defined it. Not necessarily a person’s name. Typically capped at 50 characters, but subject to change.
+V   2. screen_name                  The screen name, handle, or alias that this user identifies themselves with. screen_names are unique but subject to change. Use id_str as a user identifier whenever possible. Typically a maximum of 15 characters long, but some historical accounts may exist with longer names.
+V   3. created at                   The UTC datetime that the user account was created on Twitter.
+V   4. description                  Nullable . The user-defined UTF-8 string describing their account.
+V   5. followers count              
+X   6. listed count                 
+X   7. favourites count             

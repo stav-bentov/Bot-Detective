@@ -172,9 +172,9 @@ def get_user_age(probe_time, created_at):
     hour_difference =  (probe_time - created_at).total_seconds() / 3600 
     return hour_difference
 
-#################################### main ####################################
+#################################### MAIN ####################################
 
-# all the user metadata we want to extract from the input files
+# All the user metadata we want to extract from the input files
 user_metadata = ["statuses_count", "followers_count", "friends_count", "favourites_count", "listed_count",
                   "profile_use_background_image", "verified"]
 
@@ -201,13 +201,14 @@ user_derived_features = {"tweet_freq": [2, "statuses_count", "user_age", calcula
                          "description_length": [1, "description", calculations["length"]],
                          "screen_name_likelihood": [1, "screen_name", calculations["likelihood"]]}
 
-# notice it doesn't include -varol- because it is only labeling Bot/Not Bot
+# Notice it doesn't include -varol- because it is only labeling Bot/Not Bot
 # and doesn't include -cresci17-
-# format is: (input_fileName, target_fileName)
+# Format is: (input_fileName, target_fileName)
 input_fileNames = [("./Datasets/botometer-feedback-2019/botometer-feedback-2019_tweets.json", "./Datasets/botometer-feedback-2019/botometer-feedback-2019.tsv"),
                    ("./Datasets/celebrity-2019/celebrity-2019_tweets.json", "Datasets\celebrity-2019\celebrity-2019.tsv"),
                    ("./Datasets/political-bots-2019/political-bots-2019_tweets.json","Datasets\political-bots-2019\political-bots-2019.tsv")]
-# data from creci17 dataset
+
+# Data from creci17 dataset
 csv_datasets = {"./Datasets/csv-datasets/users_fake_followers.csv": 1,
                 "./Datasets/csv-datasets/users_genuine_acconts.csv": 0,
                 "./Datasets/csv-datasets/users_social_spambots_1.csv": 1,
@@ -221,18 +222,18 @@ csv_datasets = {"./Datasets/csv-datasets/users_fake_followers.csv": 1,
 
 columns = user_metadata + list(user_derived_features.keys()) + ['target']
 
-# create a dataframe for all features we want 
+# Create a dataframe for all features we want 
 all_df = pd.DataFrame(columns = columns)
 
 for fileName, target in csv_datasets.items():
     add_csv_file_input_into_all_df(fileName, target)
 
-# iterate over all input files and add their data to all_df
+# Iterate over all input files and add their data to all_df
 for data_tuple in input_fileNames:
     features_fileName = data_tuple[0] # features file name
     target_fileName = data_tuple[1] # target file name
     add_file_input_into_all_df(features_fileName, target_fileName)
 
-# export all_df to csv file
+# Export all_df to csv file
 all_df.to_csv("./Datasets/all_df.csv", index=False) # index=False - don't export index column
 
