@@ -1,4 +1,4 @@
-from access_keys import bearer_token
+from access_keys import bearer_token, consumer_key, consumer_secret, access_token_key, access_token_secret
 import tweepy 
 import sys 
 from datetime import datetime
@@ -126,6 +126,9 @@ def get_features(response_data):
 
     # Add derived features to user_metadata
     for feature, calc in user_derived_features.items():
+        if (feature == "favourites_growth_rate"):
+            user_metadata[feature] = user_metadata["favourites_count"] / user_age
+            continue
         num_variables = calc[0]
         calc_function = calc[-1]
         x1 = calculations[calc[1]](response_data)
@@ -195,8 +198,8 @@ def detect_users_model(model, users):
             res[response["username"]] = model_predict_if_user_is_bot(model, meta)
     
     return res
-
-#result = detect_users(["YairNetanyahu", "stav_1234"])
+#model = load_model()
+#result = detect_users_model(model, ["YairNetanyahu","stav_1234"])
 #print(result)
 # meta = get_metadata("YairNetanyahu")
 # print(model_predict_if_user_is_bot(load_model(), meta))
