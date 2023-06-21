@@ -239,9 +239,9 @@ function addSign(elementId, isBot) {
     if (usernameElement) { 
         if (isBot)
             var imgElement = createBotImage();
+            usernameElement.parentNode.insertBefore(imgElement, usernameElement.nextSibling); // Upload the image
         /*else
             var imgElement = createHumanImage();*/
-        usernameElement.parentNode.insertBefore(imgElement, usernameElement.nextSibling); // Upload the image
     }
     else {
         console.log(`usernameElement is null for ${usernameElement}`);

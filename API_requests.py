@@ -34,9 +34,9 @@ async def is_bot(usernames_str: str):
         # 1. Get the result from redis storage
         # 2. Remove the username from the list of usernames that need to be calculated (by the model)
         if r.get(username) is not None:
-            userStorageValue = eval(r.get(username)) # convert string to userStorageValue dict
+            userStorageValue = eval(r.get(username)) # Convert string to userStorageValue dict
             expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
-            if expirationDate > datetime.datetime.now(): # redis value is still valid (has not expired yet)
+            if expirationDate > datetime.datetime.now(): # Redis value is still valid (has not expired yet)
                 result[username] = userStorageValue['classification'] 
                 usernames_list.remove(username) 
     print("len after remove (usernames_list) = {0}".format(len(usernames_list)))

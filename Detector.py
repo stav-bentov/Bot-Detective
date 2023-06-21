@@ -8,27 +8,19 @@ from nltk.util import bigrams
 from collections import Counter
 import math
 import time
+import requests
+import os
+import json
 
 # ========================================== Define variables ========================================== #
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
 
-client = tweepy.Client(bearer_token, wait_on_rate_limit = True) #,timeout = 3000)
 default_image_url = "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
 
 # Define calculation of every feature [User will be response.data]
-calculations = {"statuses_count": lambda User: User["public_metrics"]["tweet_count"],
-                "followers_count": lambda User: User["public_metrics"]["followers_count"],
-                "friends_count": lambda User: User["public_metrics"]["following_count"],
-                "favourites_count": lambda User: get_liked_tweets(User["id"]),
-                "listed_count": lambda User: User["public_metrics"]["listed_count"],
-                "profile_use_background_image": lambda User: 1 if User["profile_image_url"] == default_image_url else 0, # boolean -> 0/1
-                "verified": lambda User: 1 if User["verified"] else 0, # boolean -> 0/1
-
-                "screen_name": lambda User: User["username"],
-                "name": lambda User: User["name"],
-                "description": lambda User: User["description"],
-
+calculations = {"profile_use_background_image": lambda res: 1 if res else 0, # boolean -> 0/1
+                "verified": lambda res: 1 if res else 0, # boolean -> 0/1
                 "division": lambda x1,x2: x1/x2,
                 "length": lambda str: len(str),
                 "count_digits": lambda str: sum(char.isdigit() for char in str),
@@ -37,10 +29,12 @@ calculations = {"statuses_count": lambda User: User["public_metrics"]["tweet_cou
                 }
 
 # Exsiting metadata
-user_metadata_names = ["statuses_count", "followers_count","friends_count","favourites_count","listed_count","profile_use_background_image","verified"]
+user_metadata_names = ["statuses_count", "followers_count", "friends_count", "favourites_count", "listed_count"]
 
 # Calculted features
-user_derived_features = {"tweet_freq": [2, "statuses_count", "user_age", calculations["division"]],
+user_derived_features = {"profile_use_background_image": [1, "profile_use_background_image", calculations["profile_use_background_image"]],
+                         "verified": [1, "verified", calculations["verified"]],
+                         "tweet_freq": [2, "statuses_count", "user_age", calculations["division"]],
                          "followers_growth_rate": [2, "followers_count", "user_age", calculations["division"]],
                          "friends_growth_rate": [2, "friends_count", "user_age", calculations["division"]],
                          "favourites_growth_rate": [2, "favourites_count", "user_age", calculations["division"]],
@@ -96,18 +90,10 @@ def model_predict_if_user_is_bot(model, user_metadata):
 
     # Predict the target
     prediction = model.predict(df_user_data) # Prediction [(0/1),...,] is list of predictions for many users, we only have 1 user
+    # Get prediction and accuracy
+    probability = model.predict_proba(df_user_data)
+    #print((probability[0][prediction[0]]))
     return int(prediction[0]) # Return 1 if the user is a bot else- 0
-
-def get_liked_tweets(user_id):
-    """
-        Input: gets user_id
-        Returns: liked_tweets = favourites_count = number of tweets that the user liked
-    """
-    response = client.get_liked_tweets(id = user_id)
-    # If the user liked at least 1 tweet -> response.data is not None
-    if (response.data is not None):
-        return len(response.data)
-    return 0
 
 def get_features(response_data):
     """
@@ -116,31 +102,34 @@ def get_features(response_data):
     """
     user_metadata = {}
     # Get the metadata from response.data and add to user_metadata
-    for data in user_metadata_names:
-        user_metadata[data] = calculations[data](response_data)
+    for metadata_name in user_metadata_names:
+        user_metadata[metadata_name] = response_data[metadata_name]
 
     # Calculate user_age for next features
     probe_time = datetime.now().replace(microsecond=0)
-    created_at = datetime.fromisoformat(response_data["created_at"][:-1]).replace(tzinfo=None)
+
+    datetime_format = '%a %b %d %H:%M:%S %z %Y' 
+    #created_at = datetime.fromisoformat(response_data["created_at"]).replace(tzinfo=None)
+    created_at = datetime.strptime(response_data["created_at"], datetime_format).replace(tzinfo=None)
     user_age = calculations["user_age"](probe_time, created_at)
 
     # Add derived features to user_metadata
     for feature, calc in user_derived_features.items():
-        if (feature == "favourites_growth_rate"):
+        """if (feature == "favourites_growth_rate"):
             user_metadata[feature] = user_metadata["favourites_count"] / user_age
-            continue
+            continue"""
         num_variables = calc[0]
         calc_function = calc[-1]
-        x1 = calculations[calc[1]](response_data)
+        x1 = response_data[calc[1]]
         if (num_variables == 1):
             user_metadata[feature] = calc_function(x1)
-        else: #else- num_variables == 2
+        else: #Else- num_variables == 2
             # max- Take care of a case where x2 = 0 (will get a devision by 0)
-            x2 = max (user_age if calc[2] == "user_age" else calculations[calc[1]](response_data), 1)
+            x2 = max(user_age if calc[2] == "user_age" else response_data[calc[2]], 1)
             user_metadata[feature] = calc_function(x1, x2)
-
     return user_metadata
 
+# !Not in use!
 def detect_users(users):
     """
         Input: users- a list of usernames
@@ -166,10 +155,12 @@ def detect_users(users):
     
     return res
 
+# !Not in use!
 def detect_user(username):
     meta = get_features(username)
     return model_predict_if_user_is_bot(load_model(), meta)
 
+# !Not in use!
 def detect_user_model(model, username):
     meta = get_features(username)
     return model_predict_if_user_is_bot(model, meta)
@@ -180,7 +171,7 @@ def detect_users_model(model, users):
                users- a list of usernames
         Returns: a dictonary with keys: usernames, values: user's classification (bot = 1, human = 0)
     """
-    user_fields_param = ["name", "created_at", "description", "verified", "profile_image_url", "public_metrics", "id"]
+    
     
     # client.get_users can get up to 100 users in a single request.
     req_max_size = 100
@@ -192,14 +183,47 @@ def detect_users_model(model, users):
 
         # Creates a request with get_user - get response object which contains user object by username
         # RECALL: client.get_users is synchronous by default
-        users_response = client.get_users(usernames = users_batch, user_fields = user_fields_param)
-        for response in users_response.data:
-            meta = get_features(response.data)
-            res[response["username"]] = model_predict_if_user_is_bot(model, meta)
+        users_response = send_Twitter_API_request(users_batch)
+        for user in users_response:
+            meta = get_features(user)
+            res[user["screen_name"]] = model_predict_if_user_is_bot(model, meta)
     
     return res
-#model = load_model()
-#result = detect_users_model(model, ["YairNetanyahu","stav_1234"])
-#print(result)
+
+def send_Twitter_API_request(usernames):
+    """
+        Input: usernames- a list of usernames
+        Returns: list of dictonaries with usernames metadata
+        Returns 
+    """
+    # From list to str
+    usernames = ','.join(usernames)
+    usernames_req = f"screen_name={usernames}"
+    
+    url = f"https://api.twitter.com/1.1/users/lookup.json?{usernames_req}&include_entities=false"
+
+    # Make the request
+    response = requests.request("GET", url, auth=bearer_oauth,)
+
+    #print(response.status_code)
+
+    if response.status_code != 200:
+        raise Exception(
+            f"Request returned an error: {response.status_code} {response.text}"
+        )
+
+    return response.json()
+
+def bearer_oauth(r):
+    """
+    Method required by bearer token authentication.
+    """
+    r.headers["Authorization"] = f"Bearer {bearer_token}"
+    return r
+
+
+"""model = load_model()
+result = detect_users_model(model, ["YairNetanyahu","stav_1234"])
+print(result)"""
 # meta = get_metadata("YairNetanyahu")
 # print(model_predict_if_user_is_bot(load_model(), meta))

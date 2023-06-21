@@ -19,6 +19,8 @@ V   5. followers count
 V   6. listed count                 
 V   7. favourites count             
 
+Information: https://developer.twitter.com/en/docs/twitter-api/v1/accounts-and-users/follow-search-get-users/api-reference/get-users-lookup
+
 Twitter V2
 For metadata we need:
     Name by the article:            In API v2:                                  Meaning:
