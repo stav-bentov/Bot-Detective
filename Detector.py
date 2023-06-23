@@ -83,7 +83,7 @@ def load_model():
 def model_predict_if_user_is_bot(model, user_metadata):
     """
         Input: 1) model. 2) user_metadata = a dictonary with features as keys and their corresponding values of the username
-        Returns: 1 - bot, 0 - human
+        Return dict:{classification:(0/1), accuracy:(of prediction)}
     """
     # Create a dataframe with the user_metadata
     df_user_data = pd.DataFrame(user_metadata, index=[0]) 
@@ -91,9 +91,12 @@ def model_predict_if_user_is_bot(model, user_metadata):
     # Predict the target
     prediction = model.predict(df_user_data) # Prediction [(0/1),...,] is list of predictions for many users, we only have 1 user
     # Get prediction and accuracy
-    probability = model.predict_proba(df_user_data)
-    #print((probability[0][prediction[0]]))
-    return int(prediction[0]) # Return 1 if the user is a bot else- 0
+    probability = model.predict_proba(df_user_data) # Probability [[0.1,0.9],...] is list of probabilities for many users, we only have 1 user
+    classification = int(prediction[0])
+    accuracy = (probability[0][classification]) * 100 # convert to percentage
+    # stay with 2 digits after the decimal point
+    accuracy = float("{:.2f}".format(accuracy))
+    return {'classification':classification,'accuracy':accuracy} # Return dict:{classification:(0/1), accuracy:(of prediction)}
 
 def get_features(response_data):
     """
@@ -169,7 +172,7 @@ def detect_users_model(model, users):
     """
         Input: model- the model that classify our users
                users- a list of usernames
-        Returns: a dictonary with keys: usernames, values: user's classification (bot = 1, human = 0)
+        Returns: a dictonary with keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
     """
     
     
@@ -222,8 +225,8 @@ def bearer_oauth(r):
     return r
 
 
-"""model = load_model()
-result = detect_users_model(model, ["YairNetanyahu","stav_1234"])
-print(result)"""
+# model = load_model()
+# result = detect_users_model(model, ["YairNetanyahu","stav_1234"])
+# print(result)
 # meta = get_metadata("YairNetanyahu")
 # print(model_predict_if_user_is_bot(load_model(), meta))

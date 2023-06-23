@@ -10,8 +10,9 @@ import redis
 
 # Creating redis storage to store the results of the model from all users ever calculated
 # values are stored in the following format:
-# {username: {'classification': result, 'expiration': expirationDate}}
+# {username: {'classification': result, 'accuracy': accuracy_of_prediction, 'expiration': expirationDate}}
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+#r.flushall() # delete all keys in redis storage
 
 model = load_model() # load the model once
 
@@ -23,7 +24,7 @@ def read_root():
 
 @app.get("/isBot/{usernames_str}")
 async def is_bot(usernames_str: str):
-    result = {}
+    result = {} # keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
 
     usernames_list = usernames_str.split(",")
     print("len before remove (usernames_list) = {0}".format(len(usernames_list)))
@@ -37,7 +38,9 @@ async def is_bot(usernames_str: str):
             userStorageValue = eval(r.get(username)) # Convert string to userStorageValue dict
             expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
             if expirationDate > datetime.datetime.now(): # Redis value is still valid (has not expired yet)
-                result[username] = userStorageValue['classification'] 
+                result[username] = {} # create new dict for the username
+                result[username]['classification'] = userStorageValue['classification']
+                result[username]['accuracy'] = userStorageValue['accuracy']
                 usernames_list.remove(username) 
     print("len after remove (usernames_list) = {0}".format(len(usernames_list)))
     
@@ -51,9 +54,14 @@ async def is_bot(usernames_str: str):
     # Update redis storage with the **new** usernames and their results
     for username in usernames_list:
         expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
-        userStorageValue = {'classification': result[username], 'expiration': expirationDate}
-        userStorageValue = str(userStorageValue) # convert dict to string according to redis storage format
-        r.set(username, userStorageValue)
+        print("username = ", username)
+        print("result = ", result)
+        if username in result:
+            userStorageValue = {'classification': result[username]['classification'], 'accuracy': result[username]['accuracy'] ,'expiration': expirationDate}
+            userStorageValue = str(userStorageValue) # convert dict to string according to redis storage format
+            r.set(username, userStorageValue)
+        else:
+            print("error: result = None for user: ", username, " maybe user does not exist anymore?")
     return result
 
 #app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS

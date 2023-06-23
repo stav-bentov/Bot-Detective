@@ -36,8 +36,19 @@ console.log(`expirationDate: ${expirationDate}`);
 /* An object that will be used for each user's value in the local storage- need to update classification*/
 let userInStorage = {
     classification: unknown,
+    accuracy: 0,
     expiration: expirationDate,
 };
+
+// clear local storage
+//localStorage.clear();
+
+// print local storage
+for (var i = 0; i < localStorage.length; i++){
+    // print key : value
+    console.log(`${localStorage.key(i)} : ${localStorage.getItem(localStorage.key(i))}`);
+}
+
 
 /* Checking local storage*/
 if (typeof(Storage) !== "undefined") {
@@ -117,8 +128,9 @@ function setRequestDict(){
 function setSigns(){
     for (var user in usersOnRequestDict){
         if (checkAvailabilityAndExpiration(user) == bot) {
+            let accuracy = JSON.parse(localStorage.getItem(user)).accuracy;
             for (var elementCountId in usersOnRequestDict[user]){
-                addSign(user + elementCountId, true);
+                addSign(user + elementCountId, true, accuracy);
             }
         }
         /*else (checkAvailabilityAndExpiration(user) == human)
@@ -133,7 +145,7 @@ function setSigns(){
 /**
  * Creates bot_image element
  */
-function createBotImage() {
+function createBotImage(accuracy) {
     var container = document.createElement("span");
 
     var imgElement = document.createElement('img');
@@ -147,9 +159,9 @@ function createBotImage() {
     imgElement.style.display = "inline-block";
 
     var popup = document.createElement("span");
-    popup.innerHTML = `<p> ${botPopupText} </p>`;
-    popup.style.position = "absolute";
-    //popup.style.bottom = "100%";
+    // add accuracy to popup
+    popup.innerHTML = `<p> accuracy = ${accuracy.toString()}% ${botPopupText} </p>`; // tamir
+    popup.style.position = "absolute"; 
     popup.style.bottom = "100%";
     popup.style.left = "50%";
     popup.style.transform = "translateX(-20%)";
@@ -233,12 +245,12 @@ function createHumanImage() {
  */
 // Sign of bot, will be added to each suspected bot
 // function that its input is string username. and it find the element with id = username and puts the imgElement near it
-function addSign(elementId, isBot) {  
+function addSign(elementId, isBot, accuracy) {  
     console.log(`in add sign for ${elementId}`);
     var usernameElement = document.getElementById(elementId);
     if (usernameElement) { 
         if (isBot)
-            var imgElement = createBotImage();
+            var imgElement = createBotImage(accuracy);
             usernameElement.parentNode.insertBefore(imgElement, usernameElement.nextSibling); // Upload the image
         /*else
             var imgElement = createHumanImage();*/
@@ -266,11 +278,13 @@ async function makeRequests() {
         //const response = await fetch(`https://34.165.1.66:3003/isBot/${user}`);
 
             
-        const data = await response.json();
+        const data = await response.json(); // data is dict of dicts: {username:{classification:class, accuracy:acc}}
+        console.log("data recived:" , data);
         
-        // read the result from the response
+        // read the result from the response and set the classification & accuracy in local storage
         for (var user in data){
-            userInStorage.classification = data[user];
+            userInStorage.classification = data[user]["classification"]
+            userInStorage.accuracy = data[user]["accuracy"]
             localStorage.setItem(user, JSON.stringify(userInStorage));
         }
     } catch (error) {
@@ -326,10 +340,13 @@ function handleMutation(mutations) {
                         // If user classification is saved in local storage and up to date- use it
                         let userResult;
                         usernameSpan.id = username + countId;
-                        if (userResult = checkAvailabilityAndExpiration(username)) {
+                        userResult = checkAvailabilityAndExpiration(username)
+                        if (userResult != null) {
+
                             console.log(`${username} is already calculated and got: ${userResult}`);
                             if (userResult == bot) {
-                                addSign(usernameSpan.id, true);
+                                let accuracy = JSON.parse(localStorage.getItem(username)).accuracy;
+                                addSign(usernameSpan.id, true, accuracy);
                             }
                             /*else {
                                 addSign(usernameSpan.id, false);
