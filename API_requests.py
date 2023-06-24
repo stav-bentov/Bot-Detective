@@ -5,18 +5,45 @@ from Detector import load_model
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi import FastAPI 
+from fastapi_queue import FastQueue
 import uvicorn
 import redis
+import sched
+import time
+import threading
 
+####### INIT REDIS #######
 # Creating redis storage to store the results of the model from all users ever calculated
 # values are stored in the following format:
 # {username: {'classification': result, 'accuracy': accuracy_of_prediction, 'expiration': expirationDate}}
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 #r.flushall() # delete all keys in redis storage
 
+####### INIT MODEL #######
 model = load_model() # load the model once
 
+
+def empty_requests_queue():
+    # TODO: calc all requests in fastapi-queue ...................
+
+    pass
+
+####### INIT TIMER #######
+# create timer thread. every PERIOD seconds, call a function that calcs all requests in fastapi-queue
+PERIOD = 60 # seconds
+scheduler = sched.scheduler(time.time, time.sleep)
+
+def timer_event():
+    empty_requests_queue()
+    scheduler.enter(PERIOD, 1, timer_event, ())  # Schedule the next function call to be run in PERIOD seconds
+
+timer_thread = threading.Thread(target=scheduler.run) # target is the function that the thread will run
+timer_thread.start() # start the thread
+
+scheduler.enter(0, 1, timer_event, ())  # start emptying the queue every PERIOD seconds
+
 app = FastAPI()
+queue = FastQueue(app=app) 
 
 @app.get("/")
 def read_root():

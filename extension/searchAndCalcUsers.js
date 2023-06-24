@@ -43,13 +43,6 @@ let userInStorage = {
 // clear local storage
 //localStorage.clear();
 
-// print local storage
-for (var i = 0; i < localStorage.length; i++){
-    // print key : value
-    console.log(`${localStorage.key(i)} : ${localStorage.getItem(localStorage.key(i))}`);
-}
-
-
 /* Checking local storage*/
 if (typeof(Storage) !== "undefined") {
     console.log("Code for localStorage/sessionStorage.");
