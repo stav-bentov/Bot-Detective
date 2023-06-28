@@ -5,12 +5,12 @@ from Detector import load_model
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi import FastAPI 
-from fastapi_queue import FastQueue
 import uvicorn
 import redis
-import sched
-import time
-import threading
+import asyncio
+from collections import deque 
+
+
 
 ####### INIT REDIS #######
 # Creating redis storage to store the results of the model from all users ever calculated
@@ -22,28 +22,57 @@ r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 ####### INIT MODEL #######
 model = load_model() # load the model once
 
+####### INIT requests QUEUE #######
+# format: (usernames_list, future) per request
+# notice that client need to wait for response before sending another request
+requests_queue = deque() # global for all clients
+PERIODIC_REQUESTS_CALCULATION = 2 # seconds
 
-def empty_requests_queue():
-    # TODO: calc all requests in fastapi-queue ...................
+# global variable to indicate if process_requests task has started
+process_requests_started = False
 
-    pass
+'''
+returns: tuple: (100 first usernames in the queue, index of the last request is going to be calculated now)
+'''
+def get_all_usernames_on_queue():
+    all_users = []
+    for i,item in enumerate(requests_queue):
+        usernames_list = item[0]
+        if len(all_users) + len(usernames_list) <= 100:
+            all_users.extend(usernames_list)
+            last_index = i
+        else:
+            break
+    return all_users, last_index
 
-####### INIT TIMER #######
-# create timer thread. every PERIOD seconds, call a function that calcs all requests in fastapi-queue
-PERIOD = 60 # seconds
-scheduler = sched.scheduler(time.time, time.sleep)
+async def process_requests():
+    i = 0
+    print("---------------------process_requests started-----------------=  ", i)
 
-def timer_event():
-    empty_requests_queue()
-    scheduler.enter(PERIOD, 1, timer_event, ())  # Schedule the next function call to be run in PERIOD seconds
+    while True: 
+        print("process_requests: i = ", i)
+        i += 1
+        if requests_queue: # is not empty
+            # all_users: first usernames to be calculated (up to 100)
+            # last_request_to_calc_index: index of the last request that is going to be calculated now
+            all_users, last_request_to_calc_index = get_all_usernames_on_queue() 
+            # Process the request and calculate the response
+            response = detect_users_model(model, all_users)
 
-timer_thread = threading.Thread(target=scheduler.run) # target is the function that the thread will run
-timer_thread.start() # start the thread
+            print("len(response) = ", len(response))
 
-scheduler.enter(0, 1, timer_event, ())  # start emptying the queue every PERIOD seconds
+            # update the future object with the result from the model and pop from queue
+            for i in range(last_request_to_calc_index+1):
+                future = requests_queue.popleft()[1]
+                future.set_result(response)
+
+            # usernames_list, future = requests_queue.popleft()  # Get the next request from the queue, 
+            # # Process the request and calculate the response
+            # response = detect_users_model(model, usernames_list)
+            # future.set_result(response)  # Set the result for the response future
+        await asyncio.sleep(PERIODIC_REQUESTS_CALCULATION)  # Wait for PERIODIC_REQUESTS_CALCULATION seconds before processing another up to 100 usernames
 
 app = FastAPI()
-queue = FastQueue(app=app) 
 
 @app.get("/")
 def read_root():
@@ -51,10 +80,11 @@ def read_root():
 
 @app.get("/isBot/{usernames_str}")
 async def is_bot(usernames_str: str):
+    global process_requests_started
     result = {} # keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
 
     usernames_list = usernames_str.split(",")
-    print("len before remove (usernames_list) = {0}".format(len(usernames_list)))
+    #print("len before remove (usernames_list) = {0}".format(len(usernames_list)))
 
     # Update usernames_list to be only the usernames that are not in the redis storage
     for username in usernames_list:
@@ -69,20 +99,34 @@ async def is_bot(usernames_str: str):
                 result[username]['classification'] = userStorageValue['classification']
                 result[username]['accuracy'] = userStorageValue['accuracy']
                 usernames_list.remove(username) 
-    print("len after remove (usernames_list) = {0}".format(len(usernames_list)))
+    #print("len after remove (usernames_list) = {0}".format(len(usernames_list)))
     
     # Calculates users in model and adds to the result
     if len(usernames_list) > 0: # cant send 0 users to model
-        print("usernames_list: {0}".format(usernames_list))
-        result.update(detect_users_model(model, usernames_list))
+        #print("usernames_list: {0}".format(usernames_list))
+
+        print("-------- process_requests_started = ", process_requests_started)
+
+        # if process_requests not started yet, start the process_requests task in the background (only once)
+        if not process_requests_started:
+            asyncio.ensure_future(process_requests())
+            process_requests_started = True
+
+        future = asyncio.get_event_loop().create_future() 
+        # Add usernames_list to the requests_queue
+        requests_queue.append((usernames_list, future)) # future is the future object that will be updated with the result from the model
+        response = await future # wait for the future to be updated with the result from the model
+        # response is answer for all users request
+        # update only the users that were in this request
+        for username in usernames_list:
+            if username in response:
+                result[username] = response[username]        
     else:
         print("error: len(usernames_list) = {0}".format(len(usernames_list)))
 
     # Update redis storage with the **new** usernames and their results
     for username in usernames_list:
         expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
-        print("username = ", username)
-        print("result = ", result)
         if username in result:
             userStorageValue = {'classification': result[username]['classification'], 'accuracy': result[username]['accuracy'] ,'expiration': expirationDate}
             userStorageValue = str(userStorageValue) # convert dict to string according to redis storage format
@@ -99,5 +143,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if __name__ == "__main__":
+    #asyncio.run(uvicorn.run(app, port=8000))
+    uvicorn.run(app, port=8000)
 #uvicorn.run(app, host="0.0.0.0", port=3003, ssl_keyfile="./34.165.68.249-key.pem", ssl_certfile="./34.165.68.249.pem")
-uvicorn.run(app, port=8000)
+
+

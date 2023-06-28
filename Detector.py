@@ -211,9 +211,11 @@ def send_Twitter_API_request(usernames):
     #print(response.status_code)
 
     if response.status_code != 200:
-        raise Exception(
-            f"Request returned an error: {response.status_code} {response.text}"
-        )
+        # raise Exception(
+        #     f"Request returned an error: {response.status_code} {response.text}"
+        # )
+        print(f"Request returned an error: {response.status_code} {response.text}")
+        return None
 
     return response.json()
 
