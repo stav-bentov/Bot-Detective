@@ -283,9 +283,9 @@ def bearer_oauth(r):
     return r
 
 
-model = load_model()
-#result = get_bots_in_followers(model, "GalitDistel")
-#print(result)
+"""model = load_model()
+result = get_bots_in_followers(model, "barak_ehud")
+print(result)"""
 #result = get_bots_in_likes(model, "1672665150032326659")
 #print(result)
 # meta = get_metadata("YairNetanyahu")

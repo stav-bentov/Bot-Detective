@@ -1,6 +1,6 @@
 import datetime
 from typing import Union
-from Detector import detect_users_model
+from Detector import detect_users_model, get_bots_in_followers
 from Detector import load_model
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
@@ -9,8 +9,6 @@ import uvicorn
 import redis
 import asyncio
 from collections import deque 
-
-
 
 ####### INIT REDIS #######
 # Creating redis storage to store the results of the model from all users ever calculated
@@ -82,7 +80,10 @@ async def is_bot(usernames_str: str):
                 result[username]['classification'] = userStorageValue['classification']
                 result[username]['accuracy'] = userStorageValue['accuracy']
                 usernames_list.remove(username) 
-    #print("len after remove (usernames_list) = {0}".format(len(usernames_list)))
+
+                """"""""""""""""" FOR TAMIR: """""""""""""""""
+                """ Why not do 
+                result[username] = {'classification': userStorageValue['classification'], 'accuracy': userStorageValue['accuracy']} # create new dict for the username"""
     
     # Calculates users in model and adds to the result
     if len(usernames_list) > 0: # cant send 0 users to model
@@ -116,6 +117,32 @@ async def is_bot(usernames_str: str):
             print("error: result = None for user: ", username, " maybe user does not exist anymore?")
     return result
 
+@app.get("/followersBots/{username}")
+async def followers_bots(username: str):
+    # Assumption- there is not username with the name {username}_followers
+    redis_user_key = f'{username}_followers'
+
+    # If the result of username is saved and up to date- return its value
+    """if r.get(redis_user_key) is not None:
+        print("in redis!")
+        userStorageValue = r.get(redis_user_key)
+        expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
+        if expirationDate <= datetime.datetime.now(): # Redis value is still valid (has not expired yet)
+            return userStorageValue["bot_precentage"]"""
+    
+    # Else- calculate
+    # Assumption sum(bot_prec) = 100
+    result, bot_prec = get_bots_in_followers(model, username)
+
+    # Update redis
+    """expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
+    userStorageValue = {'bot_precentage': bot_prec[1], 'expiration': expirationDate}
+    userStorageValue = str(userStorageValue) # Convert dict to string according to redis storage format
+    r.set(redis_user_key, userStorageValue)"""
+
+    return bot_prec[1]
+    #return {"result": bot_prec[1]}
+    
 #app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
 app.add_middleware(
     CORSMiddleware,
@@ -129,5 +156,3 @@ if __name__ == "__main__":
     #asyncio.run(uvicorn.run(app, port=8000))
     uvicorn.run(app, port=8000)
 #uvicorn.run(app, host="0.0.0.0", port=3003, ssl_keyfile="./34.165.68.249-key.pem", ssl_certfile="./34.165.68.249.pem")
-
-

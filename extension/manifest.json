@@ -12,8 +12,12 @@
     ],
     "content_scripts": [
         {
-           "js": ["searchAndCalcUsers.js"],
+           "js": ["searchAndCalcUsers.js.js"],
            "matches": ["https://twitter.com/*"]
+        },
+        {
+            "js": ["botPrecentage.js.js"],
+            "matches": ["https://twitter.com/*"]
         }
     ],
     "icons": {

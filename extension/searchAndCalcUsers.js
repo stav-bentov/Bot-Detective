@@ -40,7 +40,7 @@ let userInStorage = {
     expiration: expirationDate,
 };
 
-// clear local storage
+// Clear local storage
 //localStorage.clear();
 
 /* Checking local storage*/
