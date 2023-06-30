@@ -32,44 +32,27 @@ PERIODIC_REQUESTS_CALCULATION = 2 # seconds
 process_requests_started = False
 
 '''
-returns: tuple: (100 first usernames in the queue, index of the last request is going to be calculated now)
+returns: tuple:(all_users= list of all usernames on queue from all requests, number_of_calculated_requests= number of requests on queue)
 '''
 def get_all_usernames_on_queue():
     all_users = []
-    for i,item in enumerate(requests_queue):
-        usernames_list = item[0]
-        if len(all_users) + len(usernames_list) <= 100:
-            all_users.extend(usernames_list)
-            last_index = i
-        else:
-            break
-    return all_users, last_index
-
+    for usernames_list, future in requests_queue:
+        all_users += usernames_list 
+    return all_users, len(requests_queue)
+    
 async def process_requests():
-    i = 0
-    print("---------------------process_requests started-----------------=  ", i)
-
     while True: 
-        print("process_requests: i = ", i)
-        i += 1
         if requests_queue: # is not empty
-            # all_users: first usernames to be calculated (up to 100)
-            # last_request_to_calc_index: index of the last request that is going to be calculated now
-            all_users, last_request_to_calc_index = get_all_usernames_on_queue() 
+            all_users, number_of_calculated_requests = get_all_usernames_on_queue() 
             # Process the request and calculate the response
             response = detect_users_model(model, all_users)
 
             print("len(response) = ", len(response))
-
             # update the future object with the result from the model and pop from queue
-            for i in range(last_request_to_calc_index+1):
+            for i in range(number_of_calculated_requests):
                 future = requests_queue.popleft()[1]
                 future.set_result(response)
 
-            # usernames_list, future = requests_queue.popleft()  # Get the next request from the queue, 
-            # # Process the request and calculate the response
-            # response = detect_users_model(model, usernames_list)
-            # future.set_result(response)  # Set the result for the response future
         await asyncio.sleep(PERIODIC_REQUESTS_CALCULATION)  # Wait for PERIODIC_REQUESTS_CALCULATION seconds before processing another up to 100 usernames
 
 app = FastAPI()
@@ -104,8 +87,6 @@ async def is_bot(usernames_str: str):
     # Calculates users in model and adds to the result
     if len(usernames_list) > 0: # cant send 0 users to model
         #print("usernames_list: {0}".format(usernames_list))
-
-        print("-------- process_requests_started = ", process_requests_started)
 
         # if process_requests not started yet, start the process_requests task in the background (only once)
         if not process_requests_started:
