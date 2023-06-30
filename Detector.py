@@ -11,12 +11,15 @@ import time
 import requests
 import os
 import json
+import random
 
 # ========================================== Define variables ========================================== #
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
 
 default_image_url = "https://abs.twimg.com/sticky/default_profile_images/default_profile_normal.png"
+
+client = tweepy.Client(bearer_token, wait_on_rate_limit = True)
 
 # Define calculation of every feature [User will be response.data]
 calculations = {"profile_use_background_image": lambda res: 1 if res else 0, # boolean -> 0/1
@@ -168,52 +171,105 @@ def detect_user_model(model, username):
     meta = get_features(username)
     return model_predict_if_user_is_bot(model, meta)
 
-def detect_users_model(model, users):
+def detect_users_model(model, users, get_percentage = False):
     """
         Input: model- the model that classify our users
                users- a list of usernames
+               get_percentage- When True- calculate number of bot and human classification
         Returns: a dictonary with keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
+                [if get_percentage == True then returns a list: [number of bots, number of humans]]
     """
-    
-    
-    # client.get_users can get up to 100 users in a single request.
+
+    # users lookup can get up to 100 users in a single request.
     req_max_size = 100
     res = {}
+    # bot_prec[0] = number of humans, bot_prec[1] = number of bots
+    bot_prec = [0, 0]
     
     # client.get_users can get up to 100 users, so we will separate our calls to up to 100
     for i in range(0, len(users), req_max_size):
         users_batch = users[i:i + req_max_size]
 
+        # Prepare url req
+        users_batch = ','.join(users_batch)
+        usernames_req = f"screen_name={users_batch}"
+        url = f"https://api.twitter.com/1.1/users/lookup.json?{usernames_req}&include_entities=false"
+
         # Creates a request with get_user - get response object which contains user object by username
         # RECALL: client.get_users is synchronous by default
-        users_response = send_Twitter_API_request(users_batch)
+        users_response = send_Twitter_API_request(url)
         for user in users_response:
             meta = get_features(user)
-            res[user["screen_name"]] = model_predict_if_user_is_bot(model, meta)
+            is_bot = model_predict_if_user_is_bot(model, meta)
+            res[user["screen_name"]] = is_bot
+
+            if (get_percentage):
+                bot_prec[is_bot["classification"]] += 1
     
+    if (get_percentage):
+        return res, bot_prec
+
     return res
 
-def send_Twitter_API_request(usernames):
+def get_bots_in_followers(model, username):
     """
-        Input: usernames- a list of usernames
-        Returns: list of dictonaries with usernames metadata
-        Returns 
+        Input: model- The model that classify our users
+               username- The username whose followers we want to examine
+        Returns: A dictonary with keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
+                 and a list: [number of bots, number of humans]]
     """
-    # From list to str
-    usernames = ','.join(usernames)
-    usernames_req = f"screen_name={usernames}"
+    screen_name_req = f"screen_name={username}"
+    url = f"https://api.twitter.com/1.1/followers/ids.json?{screen_name_req}"
     
-    url = f"https://api.twitter.com/1.1/users/lookup.json?{usernames_req}&include_entities=false"
+    users_ids = send_Twitter_API_request(url)["ids"]
+    users_sample = random.sample(users_ids, 100)
+    res = {}
+    # bot_prec[0] = number of humans, bot_prec[1] = number of bots
+    bot_prec = [0, 0]
+    
+    users_sample = ','.join(map(str, users_sample))
+    ids_req = f"user_id={users_sample}"
+    url = f"https://api.twitter.com/1.1/users/lookup.json?{ids_req}&include_entities=false"
+    # Creates a request with get_user - get response object which contains user object by username
+    # RECALL: client.get_users is synchronous by default
+    users_response = send_Twitter_API_request(url)
+    for user in users_response:
+        meta = get_features(user)
+        is_bot = model_predict_if_user_is_bot(model, meta)
+        res[user["screen_name"]] = is_bot
+        bot_prec[is_bot["classification"]] += 1
+    
+    return res, bot_prec
 
+def get_bots_in_likes(model, tweet_id):
+    """
+        Input: model- The model that classify our users
+               tweet_id- The ID of the tweet whose likers we want to examine.
+        Returns: A dictonary with keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
+                 and a list: [number of bots, number of humans]]
+    """
+    id_req = f"screen_name={tweet_id}&user.fields=username"
+    url = f"https://api.twitter.com/2/tweets/:id/liking_users?{id_req}"
+
+    liking_users = send_Twitter_API_request(url)["data"]
+    # From list of dict with a key "username" to a list of usernames
+    liking_users = [item["username"] for item in liking_users]
+
+    # Classify users
+    return (detect_users_model(model, liking_users, True))
+
+def send_Twitter_API_request(url):
+    """
+        Input: url- the url request 
+        Returns: response
+    """
     # Make the request
     response = requests.request("GET", url, auth=bearer_oauth,)
 
-    #print(response.status_code)
-
     if response.status_code != 200:
-        # raise Exception(
-        #     f"Request returned an error: {response.status_code} {response.text}"
-        # )
+        """raise Exception(
+            f"Request returned an error: {response.status_code} {response.text}"
+        )"""
         print(f"Request returned an error: {response.status_code} {response.text}")
         return None
 
@@ -227,8 +283,10 @@ def bearer_oauth(r):
     return r
 
 
-# model = load_model()
-# result = detect_users_model(model, ["YairNetanyahu","stav_1234"])
-# print(result)
+model = load_model()
+#result = get_bots_in_followers(model, "GalitDistel")
+#print(result)
+#result = get_bots_in_likes(model, "1672665150032326659")
+#print(result)
 # meta = get_metadata("YairNetanyahu")
 # print(model_predict_if_user_is_bot(load_model(), meta))
