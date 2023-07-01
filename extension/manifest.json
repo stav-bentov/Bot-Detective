@@ -12,7 +12,7 @@
     ],
     "content_scripts": [
         {
-           "js": ["searchAndCalcUsers.js.js"],
+           "js": ["searchAndCalcUsers.js"],
            "matches": ["https://twitter.com/*"]
         },
         {
