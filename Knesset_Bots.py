@@ -53,7 +53,7 @@ def get_bot_percentage_in_followers(model, username): # now taking all followers
         number_of_user_lookup_requests = 0
 
     numbers_of_followers = len(users_ids)
-    users_sample = random.sample(users_ids, 0.1 * numbers_of_followers) # take 10% of the followers
+    users_sample = random.sample(users_ids, int(0.1 * numbers_of_followers)) # take 10% of the followers
     # make request in bunches of 100 users each time
     req_max_size = 100
     for i in range(0, len(users_sample), req_max_size): 

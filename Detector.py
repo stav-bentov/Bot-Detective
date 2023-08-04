@@ -278,8 +278,8 @@ def get_bots_in_followers(model, username):
         res[user["screen_name"]] = is_bot
         bot_prec[is_bot["classification"]] += 1
     
-    #return res, bot_prec
-    return 0
+    return res, bot_prec
+    
 
 
 def get_bots_in_likes(model, tweet_id):
