@@ -198,6 +198,7 @@ def detect_users_model(model, users, get_percentage = False):
         # Creates a request with get_user - get response object which contains user object by username
         # RECALL: client.get_users is synchronous by default
         users_response = send_Twitter_API_request(url)
+        print(users_response)
         for user in users_response:
             meta = get_features(user)
             is_bot = model_predict_if_user_is_bot(model, meta)
@@ -211,52 +212,12 @@ def detect_users_model(model, users, get_percentage = False):
 
     return res
 
-def get_bots_in_followers(model, username):
+def bearer_oauth(r):
     """
-        Input: model- The model that classify our users
-               username- The username whose followers we want to examine
-        Returns: A dictonary with keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
-                 and a list: [number of bots, number of humans]]
+    Method required by bearer token authentication.
     """
-    screen_name_req = f"screen_name={username}"
-    url = f"https://api.twitter.com/1.1/followers/ids.json?{screen_name_req}"
-    
-    users_ids = send_Twitter_API_request(url)["ids"]
-    users_sample = random.sample(users_ids, 100)
-    res = {}
-    # bot_prec[0] = number of humans, bot_prec[1] = number of bots
-    bot_prec = [0, 0]
-    
-    users_sample = ','.join(map(str, users_sample))
-    ids_req = f"user_id={users_sample}"
-    url = f"https://api.twitter.com/1.1/users/lookup.json?{ids_req}&include_entities=false"
-    # Creates a request with get_user - get response object which contains user object by username
-    # RECALL: client.get_users is synchronous by default
-    users_response = send_Twitter_API_request(url)
-    for user in users_response:
-        meta = get_features(user)
-        is_bot = model_predict_if_user_is_bot(model, meta)
-        res[user["screen_name"]] = is_bot
-        bot_prec[is_bot["classification"]] += 1
-    
-    return res, bot_prec
-
-def get_bots_in_likes(model, tweet_id):
-    """
-        Input: model- The model that classify our users
-               tweet_id- The ID of the tweet whose likers we want to examine.
-        Returns: A dictonary with keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
-                 and a list: [number of bots, number of humans]]
-    """
-    id_req = f"screen_name={tweet_id}&user.fields=username"
-    url = f"https://api.twitter.com/2/tweets/:id/liking_users?{id_req}"
-
-    liking_users = send_Twitter_API_request(url)["data"]
-    # From list of dict with a key "username" to a list of usernames
-    liking_users = [item["username"] for item in liking_users]
-
-    # Classify users
-    return (detect_users_model(model, liking_users, True))
+    r.headers["Authorization"] = f"Bearer {bearer_token}"
+    return r
 
 def send_Twitter_API_request(url):
     """
@@ -272,15 +233,70 @@ def send_Twitter_API_request(url):
         )"""
         print(f"Request returned an error: {response.status_code} {response.text}")
         return None
+    return 0
 
-    return response.json()
+def get_bots_in_followers(model, username):
+    """
+        Input: model- The model that classify our users
+               username- The username whose followers we want to examine
+        Returns: A dictonary with keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
+                 and a list: [number of bots, number of humans]]
+    """
+    screen_name_req = f"screen_name={username}"
 
-def bearer_oauth(r):
+    #v1
+    url = f"https://api.twitter.com/1.1/followers/ids.json?{screen_name_req}"
+    #v2 TODO: Need to check this!
+    # ! Maximum users per response: 1000 user objects per page
+    #url = f"https://api.twitter.com//2/users/:id/followers?{screen_name_req}"
+
+    users_ids = send_Twitter_API_request(url)
+    users_ids = send_Twitter_API_request(url)["ids"]
+    print("users_ids= ", users_ids)
+    users_sample = random.sample(users_ids, 100)
+    print("users_sample= ", users_sample)
+    res = {}
+    # bot_prec[0] = number of humans, bot_prec[1] = number of bots
+    bot_prec = [0, 0]
+    
+    users_sample = ','.join(map(str, users_sample))
+    print("users_sample= ", users_sample)
+    ids_req = f"user_id={users_sample}"
+
+    #v1
+    url = f"https://api.twitter.com/1.1/users/lookup.json?{ids_req}&include_entities=false"
+    #v2
+    #url = f"https://api.twitter.com/2/users/lookup.json?
+
+    # Creates a request with get_user - get response object which contains user object by username
+    # RECALL: client.get_users is synchronous by default
+    users_response = send_Twitter_API_request(url)
+    for user in users_response:
+        meta = get_features(user)
+        is_bot = model_predict_if_user_is_bot(model, meta)
+        res[user["screen_name"]] = is_bot
+        bot_prec[is_bot["classification"]] += 1
+    
+    #return res, bot_prec
+    return 0
+
+
+def get_bots_in_likes(model, tweet_id):
     """
-    Method required by bearer token authentication.
+        Input: model- The model that classify our users
+               tweet_id- The ID of the tweet whose likers we want to examine.
+        Returns: A dictonary with keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
+                 and a list: [number of bots, number of humans]]
     """
-    r.headers["Authorization"] = f"Bearer {bearer_token}"
-    return r
+    id_req = f"screen_name={tweet_id}&user.fields=username"
+    url = f"https://api.twitter.com/2/2/tweets/:id/?{id_req}"
+
+    liking_users = send_Twitter_API_request(url)["data"]
+    # From list of dict with a key "username" to a list of usernames
+    liking_users = [item["username"] for item in liking_users]
+
+    # Classify users
+    return (detect_users_model(model, liking_users, True))
 
 
 """model = load_model()

@@ -8,15 +8,19 @@
         "http://127.0.0.1/*",
         "https://34.165.68.249/*",
         "activeTab",
-        "tabs"
+        "tabs",
+        "webNavigation"
     ],
+    "background": {
+        "service_worker": "url_changed.js"
+    },
     "content_scripts": [
         {
-           "js": ["searchAndCalcUsers.js"],
-           "matches": ["https://twitter.com/*"]
+            "js": ["showBotPrec.js"],
+            "matches": ["https://twitter.com/*"]
         },
         {
-            "js": ["botPrecentage.js.js"],
+            "js": ["searchAndCalcUsers.js"],
             "matches": ["https://twitter.com/*"]
         }
     ],

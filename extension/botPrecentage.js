@@ -1,3 +1,5 @@
+/* NOT IN USE*/
+
 const spanSelector = '#react-root > div > div > div.css-1dbjc4n.r-18u37iz.r-13qz1uu.r-417010 > main > div > div > div > div.css-1dbjc4n.r-14lw9ot.r-jxzhtn.r-1ljd8xs.r-13l2t4g.r-1phboty.r-16y2uox.r-1jgb5lz.r-11wrixw.r-61z16t.r-1ye8kvj.r-13qz1uu.r-184en5c > div > div:nth-child(3) > div > div > div > div > div.css-1dbjc4n.r-13awgt0.r-18u37iz.r-1w6e6rj';
 
 /* Checking local storage*/
@@ -168,7 +170,7 @@ function addElement(botPrecentage, targetElement) {
 }
 
 
-observer.observe(document, {childList: true, subtree: true});
+//observer.observe(document, {childList: true, subtree: true});
 
 
 /**
@@ -178,3 +180,30 @@ observer.observe(document, {childList: true, subtree: true});
  *  3. Write diffrent sentence in popup
  *  4. Make it run every page load
  */
+document.addEventListener('readystatechange', function(e) {  // 1 & 4 - Document readystatechange
+    var state = document.readyState;
+    console.log('Document readystatechange event called (readyState === "' + state + '").');
+    const spanElement = document.querySelector(spanSelector);
+    if(spanElement)
+    {
+        console.log(spanElement.innerHTML);
+    }
+});
+
+
+/*chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if (request.message === 'hello') {
+        const { url } = request;
+        chrome.location.replace(url);
+    }
+
+});*/
+
+
+chrome.runtime.onMessageExternal.addListener(
+    function(request, sender, sendResponse) {
+      if (sender.url === blocklistedWebsite)
+        return;  // don't allow this web page access
+      if (request.openUrlInEditor)
+        openUrl(request.openUrlInEditor);
+    });
