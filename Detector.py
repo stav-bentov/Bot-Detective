@@ -233,7 +233,8 @@ def send_Twitter_API_request(url):
         )"""
         print(f"Request returned an error: {response.status_code} {response.text}")
         return None
-    return 0
+    
+    return response.json()
 
 def get_bots_in_followers(model, username):
     """
