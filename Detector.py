@@ -226,7 +226,8 @@ def send_Twitter_API_request(url):
     """
     # Make the request
     response = requests.request("GET", url, auth=bearer_oauth,)
-
+    print(response)
+    print(response.text)
     if response.status_code != 200:
         """raise Exception(
             f"Request returned an error: {response.status_code} {response.text}"
@@ -251,10 +252,14 @@ def get_bots_in_followers(model, username):
     # ! Maximum users per response: 1000 user objects per page
     #url = f"https://api.twitter.com//2/users/:id/followers?{screen_name_req}"
 
-    users_ids = send_Twitter_API_request(url)
     users_ids = send_Twitter_API_request(url)["ids"]
     print("users_ids= ", users_ids)
-    users_sample = random.sample(users_ids, 100)
+
+    if (len(users_ids) == 0):
+        return 0, [0,0]
+    users_sample = random.sample(users_ids, min(100, len(users_ids)))
+
+
     print("users_sample= ", users_sample)
     res = {}
     # bot_prec[0] = number of humans, bot_prec[1] = number of bots
@@ -280,8 +285,6 @@ def get_bots_in_followers(model, username):
     
     return res, bot_prec
     
-
-
 def get_bots_in_likes(model, tweet_id):
     """
         Input: model- The model that classify our users
@@ -290,7 +293,7 @@ def get_bots_in_likes(model, tweet_id):
                  and a list: [number of bots, number of humans]]
     """
     id_req = f"screen_name={tweet_id}&user.fields=username"
-    url = f"https://api.twitter.com/2/2/tweets/:id/?{id_req}"
+    url = f"https://api.twitter.com/2/tweets/:id/?{id_req}"
 
     liking_users = send_Twitter_API_request(url)["data"]
     # From list of dict with a key "username" to a list of usernames
@@ -299,11 +302,11 @@ def get_bots_in_likes(model, tweet_id):
     # Classify users
     return (detect_users_model(model, liking_users, True))
 
-
-"""model = load_model()
+model = load_model()
+"""
 result = get_bots_in_followers(model, "barak_ehud")
-print(result)"""
-#result = get_bots_in_likes(model, "1672665150032326659")
-#print(result)
+print(result)
+result = get_bots_in_likes(model, "1686067421872865283")
+print(result)
 # meta = get_metadata("YairNetanyahu")
-# print(model_predict_if_user_is_bot(load_model(), meta))
+# print(model_predict_if_user_is_bot(load_model(), meta))"""

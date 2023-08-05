@@ -15,7 +15,7 @@ from collections import deque
 # values are stored in the following format:
 # {username: {'classification': result, 'accuracy': accuracy_of_prediction, 'expiration': expirationDate}}
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
-#r.flushall() # delete all keys in redis storage
+r.flushall() # delete all keys in redis storage
 
 ####### INIT MODEL #######
 model = load_model() # load the model once
@@ -123,25 +123,26 @@ async def followers_bots(username: str):
     redis_user_key = f'{username}_followers'
 
     # If the result of username is saved and up to date- return its value
-    """if r.get(redis_user_key) is not None:
+    if r.get(redis_user_key) is not None:
         print("in redis!")
         userStorageValue = r.get(redis_user_key)
         expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
         if expirationDate <= datetime.datetime.now(): # Redis value is still valid (has not expired yet)
-            return userStorageValue["bot_precentage"]"""
+            return userStorageValue["bot_precentage"]
     
     # Else- calculate
     # Assumption sum(bot_prec) = 100
     result, bot_prec = get_bots_in_followers(model, username)
-
+    
     # Update redis
-    """expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
+    expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
     userStorageValue = {'bot_precentage': bot_prec[1], 'expiration': expirationDate}
     userStorageValue = str(userStorageValue) # Convert dict to string according to redis storage format
-    r.set(redis_user_key, userStorageValue)"""
-
-    return bot_prec[1]
-    #return {"result": bot_prec[1]}
+    r.set(redis_user_key, userStorageValue)
+    
+    return {"humans": bot_prec[0], "bots": bot_prec[1]}
+    #return bot_prec
+    #return {"humans": bot_prec[0], "bots": bot_prec[1]}
     
 #app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
 app.add_middleware(

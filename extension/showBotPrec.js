@@ -1,5 +1,9 @@
 const spanSelector = '#react-root > div > div > div.css-1dbjc4n.r-18u37iz.r-13qz1uu.r-417010 > main > div > div > div > div.css-1dbjc4n.r-14lw9ot.r-jxzhtn.r-1ljd8xs.r-13l2t4g.r-1phboty.r-16y2uox.r-1jgb5lz.r-11wrixw.r-61z16t.r-1ye8kvj.r-13qz1uu.r-184en5c > div > div:nth-child(3) > div > div > div > div > div.css-1dbjc4n.r-13awgt0.r-18u37iz.r-1w6e6rj';
 const infoId = "_bots_prec_info";
+const savedWords = ["home", "explore", "notifications", "messages", , "i"];
+const validForthPath = ["likes", "media", "with_replies"];
+const OK = 1;
+const NOT_DISPLAYED = -1;
 
 /* Checking local storage*/
 if (typeof(Storage) !== "undefined") {
@@ -24,6 +28,17 @@ let userInStorage = {
  * Adds bots precentage info 
  */
 async function addInfo() {
+    // If we are not in a profile page
+    if (!checkUrl(window.location.href))
+        return;
+
+    console.log("In profile page");
+
+    // Check if info is already displayed for this web page and current account
+    var isDisplayed = checkDisplayedInfo(username);
+    if (isDisplayed == OK)
+        return;
+
     // Get username from url
     var username = window.location.href.split("/")[3];
     var targetElement = document.querySelector(spanSelector);
@@ -31,38 +46,87 @@ async function addInfo() {
     var localStorageUserKey = `${username}_followers`
     var botPrecentage = checkAvailabilityAndExpiration(localStorageUserKey);
 
+    console.log(`Got botPrecentage: ${botPrecentage} from local storage`);
+
     // If not in local storage- calculate
     if (botPrecentage == -1) {
+        console.log("Not in local storage");
+
         // Make Http request
         var response = await fetch(`http://127.0.0.1:8000/followersBots/${username}`);
         botPrecentage = await response.json(); // response.json() is an int (-1 if there are no followers, precentage if there are)
 
+        console.log(`Got botPrecentage: ${botPrecentage} from redis storage`);
+
         // Update local Storage
-        userInStorage.bot_precentage = botPrecentage
+        userInStorage.bot_precentage = botPrecentage;
         localStorage.setItem(localStorageUserKey, JSON.stringify(userInStorage));
     }
-    addElement(botPrecentage, targetElement, username);
+    addElement(botPrecentage, targetElement, username, isDisplayed);
 }
 
-function addElement(botPrecentage, targetElement, username) {
+/**
+ * Check if user is saved in local storage and up to date, if it is- return the classification, else- return null
+ * @param {String} residUserKey 
+ */
+function checkAvailabilityAndExpiration(localStorageUserKey) {
+    const userStorageValue = localStorage.getItem(localStorageUserKey);
+
+    // Bot precentages of user is already calculated
+    if (userStorageValue != null) {
+        userDict = JSON.parse(userStorageValue);
+
+        // User classification is not up to date
+        if (currentDate > userDict.expiration) {
+            localStorage.removeItem(user);
+            return -1;
+        }
+        
+        // Else- the user classification is avaliable and up to date return the result
+        return userDict.bot_precentage;
+    }
+    return -1;
+}
+
+function checkDisplayedInfo(username) {
     /* Check if there is already shown info on this user*/
     var infoElement = document.getElementById(infoId);
     if (infoElement)
     {
-        console.log(`there is an info element for ${infoElement.getAttribute('data-username')}`);
+        console.log(`There is an info element for ${infoElement.getAttribute('data-username')}`);
         // Check if it's info of current user
-        if (infoElement.getAttribute('data-username'))
-            return;
-        infoElement.innerHTML = "";
+        if (infoElement.getAttribute('data-username') == username)
+        {
+            console.log("No need to change info");
+            return 1;
+        }
+        console.log("Need to change info");
+        while (infoElement.firstChild) {
+            console.log(`delete: ${infoElement.firstChild}`);
+            infoElement.removeChild(infoElement.firstChild);
+        }
+        return infoElement;
+    }
+    return null;
+}
+
+function addElement(botPrecentage, targetElement, username, container) {
+    // If the target node hasnt been found- end func (we are not in profile page)
+    if (!targetElement)
+    {
+        console.log("targetElement not exist");
+        return;
+    }
+
+    var InjectContainer = (container == null) ? 1 : 0;
+
+    // If there is no span displayed- create container
+    if (InjectContainer == 1){
+        container = document.createElement("span");
+        container.style.paddingTop  = '10px';
     }
     
-    var container = document.createElement("span");
-    container.style.paddingTop  = '10px';
-    
-    if (targetElement)
-        console.log("exist");
-    console.log(targetElement);
-
+    // ==================== Create all elements and popups ====================
     // Create a new div element
     var newDiv = document.createElement('span');
     // Set the style properties
@@ -90,6 +154,27 @@ function addElement(botPrecentage, targetElement, username) {
     popup.style.boxShadow = "0 0 5px rgba(0, 0, 0, 0.8)";
     popup.style.fontFamily = 'TwitterChirp';
 
+    /* =============================== INFO HOVER FUNCTIONS =============================== */
+    // Function to update the popup position
+    function updatePopupPosition(event) {
+        var mouseX = event.clientX;
+        var mouseY = event.clientY;
+        popup.style.left = mouseX + 'px';
+        popup.style.top = mouseY + 'px';
+    }
+
+    // Function to show the popup
+    function showPopup() {
+        popup.style.opacity = 1; // Set opacity to 1 to make it visible
+    }
+
+    // Function to hide the popup
+    function hidePopup() {
+        popup.style.opacity = 0; // Set opacity to 0 to fade it out
+    }
+    /* =============================== END =============================== */
+
+
     // Add event listeners to the image element
     imgElement.addEventListener('mouseenter', function(event) {
         showPopup();
@@ -107,36 +192,34 @@ function addElement(botPrecentage, targetElement, username) {
 
     /* Add to webpage*/
     // Set the content or attributes of the new div element
-    newDiv.textContent = `${botPrecentage}% out of 100 random followers are bots`; // tamir
-    // Insert the new div element after the target element
-    targetElement.parentNode.appendChild(container, targetElement.nextSibling);
+    newDiv.textContent = `${botPrecentage} out of 100 random followers are bots`;
+
+    // Insert the new div element after the target element (only if the container hasnt been displayed yet)
+    if (InjectContainer == 1)
+        targetElement.parentNode.appendChild(container, targetElement.nextSibling);
     
 }
 
-/* =============================== INFO HOVER FUNCTIONS =============================== */
-// Function to update the popup position
-function updatePopupPosition(event) {
-    var mouseX = event.clientX;
-    var mouseY = event.clientY;
-    popup.style.left = mouseX + 'px';
-    popup.style.top = mouseY + 'px';
-}
-
-// Function to show the popup
-function showPopup() {
-    popup.style.opacity = 1; // Set opacity to 1 to make it visible
-}
-
-// Function to hide the popup
-function hidePopup() {
-    popup.style.opacity = 0; // Set opacity to 0 to fade it out
-}
-/* =============================== END =============================== */
 
 /**
  * Gets a url and check if we are in a profile page
  */
 function checkUrl(url){
+    /*  What is a url that I should add to it info? 
+     https://twitter.com/username
+     https://twitter.com/username/likes
+     https://twitter.com/username/media
+     https://twitter.com/username/with_replies
+    What not?
+      https://twitter.com/username/status/1665302793203113984
+      https://twitter.com/home
+      https://twitter.com/explore
+      https://twitter.com/notifications
+      https://twitter.com/messages
+      https://twitter.com/username/lists
+      https://twitter.com/username/communities
+      https://twitter.com/i/verified-choose
+     */
     var urlArray = url.split("/");
     if (urlArray.length == 5 || urlArray.length == 4)
     {
@@ -175,32 +258,10 @@ console.log("Content script sent READY message to background");
 /* ============================================ DONE Listeners SETUP ============================================= */
 
 
-/* Add prec on current page (only if its a profile page) */
-if (checkUrl(window.location.href)) {
-    addInfo();
-}
 
-/*const observer = new MutationObserver(async (mutations) => {
-    console.log("in observer");
-    // mutations is a list of mutation
-    mutations.forEach(async function (mutation) {
-        // If there is at least 1 added node
-        if (mutation.addedNodes.length) {
-            // Pass each node of addedNodes
-            for (let addedNode of mutation.addedNodes) {
-                // If node is HTMLElement- check if it's a span with usernameClass and starts with @ -> it's our username
-                if (addedNode instanceof HTMLElement) {
-                    //Take every span with usernameClass (convert to array for filltering), filter to get just username
-                    const spanElement = addedNode.querySelector(spanSelector);
-                    if(spanElement)
-                    {
-                        console.log(spanElement.textContent);
-                        console.log(spanElement);
-                        observer.disconnect();
-                        await addInfo(spanElement);
-                    }
-                }
-            }
-        }
-    });
-});*/
+window.onload = function() {
+    if (checkUrl(window.location.href)) {
+        console.log("in first attemp")
+        addInfo();
+    }
+};

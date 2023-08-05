@@ -12,7 +12,7 @@
         "webNavigation"
     ],
     "background": {
-        "service_worker": "url_changed.js"
+        "service_worker": "urlChanged.js"
     },
     "content_scripts": [
         {
