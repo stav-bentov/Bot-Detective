@@ -1,9 +1,18 @@
 const spanSelector = '#react-root > div > div > div.css-1dbjc4n.r-18u37iz.r-13qz1uu.r-417010 > main > div > div > div > div.css-1dbjc4n.r-14lw9ot.r-jxzhtn.r-1ljd8xs.r-13l2t4g.r-1phboty.r-16y2uox.r-1jgb5lz.r-11wrixw.r-61z16t.r-1ye8kvj.r-13qz1uu.r-184en5c > div > div:nth-child(3) > div > div > div > div > div.css-1dbjc4n.r-13awgt0.r-18u37iz.r-1w6e6rj';
+const attributeSelector = '[data-testid="UserName"]'
 const infoId = "_bots_prec_info";
 const savedWords = ["home", "explore", "notifications", "messages", , "i"];
 const validForthPath = ["likes", "media", "with_replies"];
 const OK = 1;
-const NOT_DISPLAYED = -1;
+const BOT_PREC_TYPE = 1;
+const USER_BOT_TYPE = 2;
+const MISSING = -2;
+const NUM_FOLLOWERS_CHECKED = 100;
+
+let userInStorageBotPrec = {
+    bot_precentage: MISSING,
+    expiration: MISSING
+};
 
 /* Checking local storage*/
 if (typeof(Storage) !== "undefined") {
@@ -12,80 +21,80 @@ if (typeof(Storage) !== "undefined") {
     console.log("Sorry! No Web Storage support..");
 }
 
-/* For each user saved in this session, we aim to retain their data for a maximum of 30 days (when date= deletetionDate + 30).
- After that period, the data will be deleted, and recalculation will be necessary.*/
-const currentDate = new Date();
-const  expirationDate = new Date();
-expirationDate .setDate(expirationDate .getDate() + 10);
-
-/* An object that will be used for each user's value in the local storage- need to update classification*/
-let userInStorage = {
-    bot_precentage: -1,
-    expiration: expirationDate,
-};
-
 /**
  * Adds bots precentage info 
  */
 async function addInfo() {
+    /* For each user saved in this session, we aim to retain their data for a maximum of 30 days (when date= deletetionDate + 30).
+    After that period, the data will be deleted, and recalculation will be necessary.*/
+    var  expirationDate = new Date();
+    expirationDate.setDate(expirationDate .getDate() + 10);
+
     // If we are not in a profile page
     if (!checkUrl(window.location.href))
         return;
 
-    console.log("In profile page");
+    // Get username from url
+    var username = window.location.href.split("/")[3];
+
+    console.log(`In profile page of:${username}`);
 
     // Check if info is already displayed for this web page and current account
     var isDisplayed = checkDisplayedInfo(username);
     if (isDisplayed == OK)
         return;
-
-    // Get username from url
-    var username = window.location.href.split("/")[3];
-    var targetElement = document.querySelector(spanSelector);
     
-    var localStorageUserKey = `${username}_followers`
-    var botPrecentage = checkAvailabilityAndExpiration(localStorageUserKey);
-
-    console.log(`Got botPrecentage: ${botPrecentage} from local storage`);
+    var targetElement = document.querySelector(attributeSelector);
+    var localStorageUserKey = `${username}_followers`;
+    var botPrecentageData = checkAvailabilityAndExpiration(localStorageUserKey, BOT_PREC_TYPE);
 
     // If not in local storage- calculate
-    if (botPrecentage == -1) {
+    if (botPrecentageData == MISSING) {
         console.log("Not in local storage");
 
         // Make Http request
         var response = await fetch(`http://127.0.0.1:8000/followersBots/${username}`);
-        botPrecentage = await response.json(); // response.json() is an int (-1 if there are no followers, precentage if there are)
-
-        console.log(`Got botPrecentage: ${botPrecentage} from redis storage`);
+        botPrecentageData = await response.json(); // response.json() is a dict with keys humans, bots
 
         // Update local Storage
-        userInStorage.bot_precentage = botPrecentage;
-        localStorage.setItem(localStorageUserKey, JSON.stringify(userInStorage));
+        userInStorageBotPrec.bot_precentage = botPrecentageData;
+        userInStorageBotPrec.expiration = expirationDate;
+        localStorage.setItem(localStorageUserKey, JSON.stringify(userInStorageBotPrec));
     }
-    addElement(botPrecentage, targetElement, username, isDisplayed);
+    console.log(`Got botPrecentage: ${botPrecentageData["bots"]} from local storage`);
+    addElement(botPrecentageData, targetElement, username, isDisplayed);
 }
 
 /**
- * Check if user is saved in local storage and up to date, if it is- return the classification, else- return null
- * @param {String} residUserKey 
+ * Check if user is saved in local storage and the required data is up to date,  if it is-return the classification/ bot prec, else- return MISSING
+ * @param {String} localStorageUserKey 
  */
-function checkAvailabilityAndExpiration(localStorageUserKey) {
-    const userStorageValue = localStorage.getItem(localStorageUserKey);
+function checkAvailabilityAndExpiration(localStorageUserKey, searchType) {
+    var currentDate = new Date();
+    var userStorageValue = localStorage.getItem(localStorageUserKey);
 
-    // Bot precentages of user is already calculated
+    // User classification(/Bot precentages of user) is done and saved in local storage
     if (userStorageValue != null) {
         userDict = JSON.parse(userStorageValue);
-
-        // User classification is not up to date
-        if (currentDate > userDict.expiration) {
-            localStorage.removeItem(user);
-            return -1;
+        console.log(`localStorageUserKey: ${localStorageUserKey}`);
+        console.log(`userDict.expiration: ${userDict.expiration}`);
+        console.log(`userDict.bot_precentage: ${userDict.bot_precentage}`);
+        console.log(`userDict.classification: ${userDict.classification}`);
+        console.log(`searchType: ${searchType}`);
+        if (userDict.expiration == MISSING || currentDate > userDict.expiration) {
+            userDict.expiration = MISSING;
+            return MISSING;
         }
-        
-        // Else- the user classification is avaliable and up to date return the result
-        return userDict.bot_precentage;
+        // Else- data is up to date
+        if (searchType == BOT_PREC_TYPE) {
+            console.log(`from checkAvailabilityAndExpiration:${userDict.bot_precentage}`);
+            return userDict.bot_precentage;
+        }
+        console.log(`from checkAvailabilityAndExpiration:${userDict.classification}`);
+        return userDict.classification;
     }
-    return -1;
+    // Not in local storage
+    return MISSING;
 }
 
 function checkDisplayedInfo(username) {
@@ -111,8 +120,10 @@ function checkDisplayedInfo(username) {
 }
 
 function addElement(botPrecentage, targetElement, username, container) {
+    var numFollowersChecked = botPrecentage["bots"] + botPrecentage["humans"];
     // If the target node hasnt been found- end func (we are not in profile page)
-    if (!targetElement)
+    // Or there is no followers to this account
+    if (!targetElement || numFollowersChecked == 0)
     {
         console.log("targetElement not exist");
         return;
@@ -144,7 +155,7 @@ function addElement(botPrecentage, targetElement, username, container) {
 
     // Create a popup element
     var popup = document.createElement('div');
-    popup.innerHTML = `We exmine 100 followers of this account (uniformly) and <br> got ${botPrecentage} accounts that our model classifies as bots`;
+    popup.innerHTML = `We exmine ${numFollowersChecked} followers of this account (uniformly) and <br> got ${botPrecentage["bots"]} accounts that our model classifies as bots`;
     popup.style.position = 'fixed';
     popup.style.transition = 'opacity 0.3s ease-in-out'; // Add transition CSS property
     popup.style.opacity = 0; // Set initial opacity to 0
@@ -192,14 +203,13 @@ function addElement(botPrecentage, targetElement, username, container) {
 
     /* Add to webpage*/
     // Set the content or attributes of the new div element
-    newDiv.textContent = `${botPrecentage} out of 100 random followers are bots`;
+    newDiv.textContent = `${botPrecentage["bots"]} out of 100 random followers are bots`;
 
     // Insert the new div element after the target element (only if the container hasnt been displayed yet)
     if (InjectContainer == 1)
         targetElement.parentNode.appendChild(container, targetElement.nextSibling);
     
 }
-
 
 /**
  * Gets a url and check if we are in a profile page

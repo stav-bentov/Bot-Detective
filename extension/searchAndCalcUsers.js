@@ -25,23 +25,15 @@ const unknown = -1;
 const bot = 1;
 const human = 0;
 
-/* For each user saved in this session, we aim to retain their data for a maximum of 30 days (when date= deletetionDate + 30).
- After that period, the data will be deleted, and recalculation will be necessary.*/
-const currentDate = new Date();
-const  expirationDate = new Date();
-expirationDate .setDate(expirationDate .getDate() + 30);
-console.log(`currentDate: ${currentDate}`);
-console.log(`expirationDate: ${expirationDate}`);
-
 /* An object that will be used for each user's value in the local storage- need to update classification*/
-let userInStorage = {
+let userInStorageClassification = {
     classification: unknown,
     accuracy: 0,
-    expiration: expirationDate,
+    expiration: MISSING
 };
 
 // Clear local storage
-//localStorage.clear();
+localStorage.clear(); 
 
 /* Checking local storage*/
 if (typeof(Storage) !== "undefined") {
@@ -101,7 +93,6 @@ async function intervalFunc(){
  * make sure to stop observsion and wait for it to end if needed.
  */
 function setRequestDict(){
-    // TODO: Check if we miss usernames between disconnect
     // Stop observer until we finish copy the dict
     observer.disconnect(document);
     console.log(mutationDict);
@@ -120,13 +111,13 @@ function setRequestDict(){
  */
 function setSigns(){
     for (var user in usersOnRequestDict){
-        if (checkAvailabilityAndExpiration(user) == bot) {
+        if (checkAvailabilityAndExpiration(user, USER_BOT_TYPE) == bot) {
             let accuracy = JSON.parse(localStorage.getItem(user)).accuracy;
             for (var elementCountId in usersOnRequestDict[user]){
                 addSign(user + elementCountId, true, accuracy);
             }
         }
-        /*else (checkAvailabilityAndExpiration(user) == human)
+        /*else (checkAvailabilityAndExpiration(user, USER_BOT_TYPE) == human)
         {
             for (var elementCountId in usersOnRequestDict[user]){
                 addSign(user + elementCountId, false);
@@ -142,9 +133,6 @@ function createBotImage(accuracy) {
     var container = document.createElement("span");
 
     var imgElement = document.createElement('img');
-    // Grey bot
-    //imgElement.src = 'https://i.imgur.com/D2uoogs.png';
-    // Red bot
     imgElement.src = 'https://i.imgur.com/haGW0N6.png';
     imgElement.style.width = '20px';
     imgElement.style.height = '23px';
@@ -189,9 +177,6 @@ function createHumanImage() {
     var container = document.createElement("span");
 
     var imgElement = document.createElement('img');
-    // Grey bot
-    //imgElement.src = 'https://i.imgur.com/D2uoogs.png';
-    // Red bot
     imgElement.src = 'https://imgtr.ee/images/2023/06/18/YutNQ.png';
     imgElement.style.width = '20px';
     imgElement.style.height = '23px';
@@ -255,10 +240,12 @@ function addSign(elementId, isBot, accuracy) {
 
 /**
  * Sends API request for every user in usersOnRequestDict(keys) and classify the users.
- * TODO: Think about making the API request get bunch of users
  */
 async function makeRequests() {
     try {
+        var  expirationDate = new Date();
+        expirationDate.setDate(expirationDate .getDate() + 10);
+
         // API request for detect human/bot (runs the model on username)
 
         // For FastAPI
@@ -270,39 +257,19 @@ async function makeRequests() {
         // For FastAPI - VM FastAPI
         //const response = await fetch(`https://34.165.1.66:3003/isBot/${user}`);
 
-            
         const data = await response.json(); // data is dict of dicts: {username:{classification:class, accuracy:acc}}
         console.log("data recived:" , data);
         
-        // read the result from the response and set the classification & accuracy in local storage
+        // Read the result from the response and set the classification & accuracy in local storage
         for (var user in data){
-            userInStorage.classification = data[user]["classification"]
-            userInStorage.accuracy = data[user]["accuracy"]
-            localStorage.setItem(user, JSON.stringify(userInStorage));
+            userInStorageClassification.classification = data[user]["classification"];
+            userInStorageClassification.accuracy = data[user]["accuracy"];
+            userInStorageClassification.expiration = expirationDate;
+            localStorage.setItem(user, JSON.stringify(userInStorageClassification));
         }
     } catch (error) {
         console.log(`error`);
     }
-}
-
-/**
- * Check if user is saved in local storage and up to date, if it is- return the classification, else- return null
- * @param {String} user 
- */
-function checkAvailabilityAndExpiration(user) {
-    const userStorageValue = localStorage.getItem(user);
-    // User classification is done and saved in local storage
-    if (userStorageValue != null) {
-        userDict = JSON.parse(userStorageValue);
-        // User classification is not up to date
-        if (currentDate > userDict.expiration) {
-            localStorage.removeItem(user);
-            return null;
-        }
-        // Else- the user classification is avaliable and up to date return the result
-        return userDict.classification;
-    }
-    return null;
 }
 
 /**
@@ -333,8 +300,8 @@ function handleMutation(mutations) {
                         // If user classification is saved in local storage and up to date- use it
                         let userResult;
                         usernameSpan.id = username + countId;
-                        userResult = checkAvailabilityAndExpiration(username)
-                        if (userResult != null) {
+                        userResult = checkAvailabilityAndExpiration(username, USER_BOT_TYPE)
+                        if (userResult != MISSING) {
 
                             console.log(`${username} is already calculated and got: ${userResult}`);
                             if (userResult == bot) {
