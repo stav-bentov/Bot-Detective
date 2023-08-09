@@ -33,7 +33,7 @@ let userInStorageClassification = {
 };
 
 // Clear local storage
-localStorage.clear(); 
+//localStorage.clear(); 
 
 /* Checking local storage*/
 if (typeof(Storage) !== "undefined") {
@@ -136,37 +136,54 @@ function createBotImage(accuracy) {
     imgElement.src = 'https://i.imgur.com/haGW0N6.png';
     imgElement.style.width = '20px';
     imgElement.style.height = '23px';
-    imgElement.style.position = "relative";
-    imgElement.style.display = "inline-block";
+    imgElement.style.position = 'relative';
+    imgElement.style.display = 'inline-block';
+    imgElement.style.cursor = 'pointer';
 
-    var popup = document.createElement("span");
+    var popup = document.createElement('div');
     // add accuracy to popup
     popup.innerHTML = `<p> accuracy = ${accuracy.toString()}% ${botPopupText} </p>`; // tamir
-    popup.style.position = "absolute"; 
-    popup.style.bottom = "100%";
-    popup.style.left = "50%";
-    popup.style.transform = "translateX(-20%)";
-    popup.style.backgroundColor = "#f1f1f1";
-    popup.style.padding = "10px";
-    popup.style.borderRadius = "4px";
-    popup.style.boxShadow = "0 0 5px rgba(0, 0, 0, 0.8)";
-    popup.style.visibility = "hidden";
-    popup.style.opacity = "0";
-    popup.style.transition = "visibility 0s, opacity 0.6s";
-    popup.style.zIndex = "9999"; // Ensure the pop-up appears on top
+    popup.style.position = 'fixed';
+    // Add animate to the entry
+    popup.style.transition = 'opacity 1s ease-in-out'; 
+    popup.style.opacity = 0; 
+    popup.style.backgroundColor = '#f1f1f1';
+    popup.style.padding = '10px';
+    popup.style.borderRadius = '4px';
+    popup.style.boxShadow = '0 0 5px rgba(0, 0, 0, 0.8)';
+    popup.style.fontFamily = 'TwitterChirp';
+    popup.style.backgroundImage = 'https://i.imgur.com/haGW0N6.png'; // Replace with your image path
+    popup.style.backgroundSize = "cover"; // Adjust to 'contain', 'cover', etc.
+    popup.style.backgroundRepeat = "no-repeat";
 
-    imgElement.addEventListener("mouseover", function() {
-        popup.style.visibility = "visible";
-        popup.style.opacity = "1";
+    /* =============================== INFO HOVER FUNCTIONS =============================== */
+    // Function to update the popup position
+    function updatePopupPosition(event) {
+        var mouseX = event.clientX;
+        var mouseY = event.clientY;
+        popup.style.left = mouseX + 'px';
+        popup.style.top = mouseY + 'px';
+    }
+
+    // Function to show the popup
+    function showPopup() {
+        popup.style.opacity = 1; // Set opacity to 1 to make it visible
+    }
+
+    // Function to hide the popup
+    function hidePopup() {
+        popup.style.opacity = 0; // Set opacity to 0 to fade it out
+    }
+    /* =============================== END =============================== */
+
+    // Add event listeners to the image element
+    imgElement.addEventListener('mouseenter', function(event) {
+        showPopup();
+        updatePopupPosition(event);
     });
-
-    imgElement.addEventListener("mouseout", function() {
-        popup.style.visibility = "hidden";
-        popup.style.opacity = "0";
-      });
-    
-    imgElement.style.cursor = 'pointer';
-      
+    imgElement.addEventListener('mousemove', updatePopupPosition);
+    imgElement.addEventListener('mouseleave', hidePopup);
+    // Add all to container
     container.appendChild(imgElement);
     container.appendChild(popup);
 
@@ -245,6 +262,16 @@ async function makeRequests() {
     try {
         var  expirationDate = new Date();
         expirationDate.setDate(expirationDate .getDate() + 10);
+        
+        // TODO: Delete later
+        /*const requestOptions = {
+            method: 'GET', // or 'POST', 'PUT', etc.
+            mode: 'cors',
+            headers: {
+              'Content-Type': 'application/json' // Modify as needed
+            }
+          };*/
+
 
         // API request for detect human/bot (runs the model on username)
 

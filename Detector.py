@@ -198,7 +198,13 @@ def detect_users_model(model, users, get_percentage = False):
         # Creates a request with get_user - get response object which contains user object by username
         # RECALL: client.get_users is synchronous by default
         users_response = send_Twitter_API_request(url)
-        print(users_response)
+        
+        # Error occured in send_Twitter_API_request()- delete this users to avoid future errors
+        if (users_response is None):
+            for user in users[i:i + req_max_size]:
+                del res[user]
+            continue
+
         for user in users_response:
             meta = get_features(user)
             is_bot = model_predict_if_user_is_bot(model, meta)
@@ -226,12 +232,8 @@ def send_Twitter_API_request(url):
     """
     # Make the request
     response = requests.request("GET", url, auth=bearer_oauth,)
-    print(response)
-    print(response.text)
+    
     if response.status_code != 200:
-        """raise Exception(
-            f"Request returned an error: {response.status_code} {response.text}"
-        )"""
         print(f"Request returned an error: {response.status_code} {response.text}")
         return None
     
@@ -252,15 +254,22 @@ def get_bots_in_followers(model, username):
     # ! Maximum users per response: 1000 user objects per page
     #url = f"https://api.twitter.com//2/users/:id/followers?{screen_name_req}"
 
-    users_ids = send_Twitter_API_request(url)["ids"]
+    response = send_Twitter_API_request(url)
+
+    if (response == None):
+        return None, None
+
+    users_ids = response["ids"]
     print("users_ids= ", users_ids)
 
+    # User has no followers
     if (len(users_ids) == 0):
         return 0, [0,0]
+    
+    # Get 100 random followers (or |followers| if |followers| < 100)
     users_sample = random.sample(users_ids, min(100, len(users_ids)))
-
-
     print("users_sample= ", users_sample)
+    
     res = {}
     # bot_prec[0] = number of humans, bot_prec[1] = number of bots
     bot_prec = [0, 0]
@@ -276,8 +285,12 @@ def get_bots_in_followers(model, username):
 
     # Creates a request with get_user - get response object which contains user object by username
     # RECALL: client.get_users is synchronous by default
-    users_response = send_Twitter_API_request(url)
-    for user in users_response:
+    response = send_Twitter_API_request(url)
+
+    if (response == None):
+        return None, None
+
+    for user in response:
         meta = get_features(user)
         is_bot = model_predict_if_user_is_bot(model, meta)
         res[user["screen_name"]] = is_bot
@@ -295,7 +308,12 @@ def get_bots_in_likes(model, tweet_id):
     id_req = f"screen_name={tweet_id}&user.fields=username"
     url = f"https://api.twitter.com/2/tweets/:id/?{id_req}"
 
-    liking_users = send_Twitter_API_request(url)["data"]
+    response = send_Twitter_API_request(url)["data"]
+
+    if (response is None):
+        return None
+
+    liking_users = response["data"]
     # From list of dict with a key "username" to a list of usernames
     liking_users = [item["username"] for item in liking_users]
 

@@ -51,11 +51,25 @@ async function addInfo() {
     // If not in local storage- calculate
     if (botPrecentageData == MISSING) {
         console.log("Not in local storage");
+        
+        // TODO: Delete later
+        /*const requestOptions = {
+            method: 'GET', // or 'POST', 'PUT', etc.
+            mode: 'cors',
+            headers: {
+              'Content-Type': 'application/json' // Modify as needed
+            }
+          };*/
 
         // Make Http request
-        var response = await fetch(`http://127.0.0.1:8000/followersBots/${username}`);
-        botPrecentageData = await response.json(); // response.json() is a dict with keys humans, bots
+        var response = await fetch(`http://127.0.0.1:8000/followersBots/${username}`, requestOptions);
 
+        // Error occured in fetch
+        if (!response)
+          return;
+
+        botPrecentageData = await response.json(); // response.json() is a dict with keys humans, bots
+        
         // Update local Storage
         userInStorageBotPrec.bot_precentage = botPrecentageData;
         userInStorageBotPrec.expiration = expirationDate;
@@ -70,6 +84,7 @@ async function addInfo() {
  * @param {String} localStorageUserKey 
  */
 function checkAvailabilityAndExpiration(localStorageUserKey, searchType) {
+    console.log(`checkAvailabilityAndExpiration for ${localStorageUserKey}`);
     var currentDate = new Date();
     var userStorageValue = localStorage.getItem(localStorageUserKey);
 
@@ -133,7 +148,7 @@ function addElement(botPrecentage, targetElement, username, container) {
 
     // If there is no span displayed- create container
     if (InjectContainer == 1){
-        container = document.createElement("span");
+        container = document.createElement('span');
         container.style.paddingTop  = '10px';
     }
     
@@ -148,21 +163,22 @@ function addElement(botPrecentage, targetElement, username, container) {
     imgElement.src = 'https://i.ibb.co/BrYkxk5/question.png';
     imgElement.style.width = '15px';
     imgElement.style.height = '15px';
-    imgElement.style.position = "relative";
-    imgElement.style.display = "inline-block";
-    imgElement.style.padding = "2px";
+    imgElement.style.position = 'relative';
+    imgElement.style.display = 'inline-block';
+    imgElement.style.padding = '2px';
     imgElement.style.cursor = 'pointer';
 
     // Create a popup element
     var popup = document.createElement('div');
     popup.innerHTML = `We exmine ${numFollowersChecked} followers of this account (uniformly) and <br> got ${botPrecentage["bots"]} accounts that our model classifies as bots`;
     popup.style.position = 'fixed';
-    popup.style.transition = 'opacity 0.3s ease-in-out'; // Add transition CSS property
-    popup.style.opacity = 0; // Set initial opacity to 0
-    popup.style.backgroundColor = "#f1f1f1";
-    popup.style.padding = "10px";
-    popup.style.borderRadius = "4px";
-    popup.style.boxShadow = "0 0 5px rgba(0, 0, 0, 0.8)";
+    // Add animate to the entry
+    popup.style.transition = 'opacity 0.3s ease-in-out'; 
+    popup.style.opacity = 0; 
+    popup.style.backgroundColor = '#f1f1f1';
+    popup.style.padding = '10px';
+    popup.style.borderRadius = '4px';
+    popup.style.boxShadow = '0 0 5px rgba(0, 0, 0, 0.8)';
     popup.style.fontFamily = 'TwitterChirp';
 
     /* =============================== INFO HOVER FUNCTIONS =============================== */
@@ -194,7 +210,7 @@ function addElement(botPrecentage, targetElement, username, container) {
     imgElement.addEventListener('mousemove', updatePopupPosition);
     imgElement.addEventListener('mouseleave', hidePopup);
 
-    /* Add all to container*/
+    // Add all to container
     container.appendChild(newDiv);
     container.appendChild(popup);
     container.appendChild(imgElement);
@@ -269,9 +285,9 @@ console.log("Content script sent READY message to background");
 
 
 
-window.onload = function() {
+window.onload = async function() {
     if (checkUrl(window.location.href)) {
-        console.log("in first attemp")
-        addInfo();
+        console.log("in first attemp");
+        await addInfo();
     }
 };

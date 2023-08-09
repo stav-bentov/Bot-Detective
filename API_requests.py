@@ -15,43 +15,49 @@ from collections import deque
 # values are stored in the following format:
 # {username: {'classification': result, 'accuracy': accuracy_of_prediction, 'expiration': expirationDate}}
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
-r.flushall() # delete all keys in redis storage
+#r.flushall() # delete all keys in redis storage
 
 ####### INIT MODEL #######
 model = load_model() # load the model once
 
 ####### INIT requests QUEUE #######
-# format: (usernames_list, future) per request
-# notice that client need to wait for response before sending another request
-requests_queue = deque() # global for all clients
-PERIODIC_REQUESTS_CALCULATION = 2 # seconds
+# Format: (usernames_list, future) per request
+# Notice that client need to wait for response before sending another request
+requests_queue = deque() # Global for all clients
+PERIODIC_REQUESTS_CALCULATION = 2 # Seconds
 
-# global variable to indicate if process_requests task has started
+# Global variable to indicate if process_requests task has started
 process_requests_started = False
 
-'''
-returns: tuple:(all_users= list of all usernames on queue from all requests, number_of_calculated_requests= number of requests on queue)
-'''
+
 def get_all_usernames_on_queue():
+    """
+        Returns: tuple:(all_users= list of all usernames on queue from all requests, 
+                        number_of_calculated_requests= number of requests on queue)
+    """
     all_users = []
     for usernames_list, future in requests_queue:
         all_users += usernames_list 
     return all_users, len(requests_queue)
-    
-async def process_requests():
-    while True: 
-        if requests_queue: # is not empty
-            all_users, number_of_calculated_requests = get_all_usernames_on_queue() 
-            # Process the request and calculate the response
-            response = detect_users_model(model, all_users)
 
-            print("len(response) = ", len(response))
-            # update the future object with the result from the model and pop from queue
+async def process_requests():
+    """
+        Runs every 2 PERIODIC_REQUESTS_CALCULATION and calculates user's classifications (in queue)
+    """
+    while True: 
+        if requests_queue:
+            all_users, number_of_calculated_requests = get_all_usernames_on_queue() 
+            # Process the request and calculate the users classification
+            users_classification = detect_users_model(model, all_users)
+
+            print("len(users_classification) = ", len(users_classification))
+            # Update the future object with the result from the model and pop from queue
             for i in range(number_of_calculated_requests):
                 future = requests_queue.popleft()[1]
-                future.set_result(response)
-
-        await asyncio.sleep(PERIODIC_REQUESTS_CALCULATION)  # Wait for PERIODIC_REQUESTS_CALCULATION seconds before processing another up to 100 usernames
+                future.set_result(users_classification)
+        
+        # Waits for PERIODIC_REQUESTS_CALCULATION seconds before processing another up to 100 usernames
+        await asyncio.sleep(PERIODIC_REQUESTS_CALCULATION)  
 
 app = FastAPI()
 
@@ -62,7 +68,7 @@ def read_root():
 @app.get("/isBot/{usernames_str}")
 async def is_bot(usernames_str: str):
     global process_requests_started
-    result = {} # keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
+    result = {} # Keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
 
     usernames_list = usernames_str.split(",")
     #print("len before remove (usernames_list) = {0}".format(len(usernames_list)))
@@ -80,26 +86,23 @@ async def is_bot(usernames_str: str):
                 result[username]['classification'] = userStorageValue['classification']
                 result[username]['accuracy'] = userStorageValue['accuracy']
                 usernames_list.remove(username) 
-
-                """"""""""""""""" FOR TAMIR: """""""""""""""""
-                """ Why not do 
-                result[username] = {'classification': userStorageValue['classification'], 'accuracy': userStorageValue['accuracy']} # create new dict for the username"""
     
     # Calculates users in model and adds to the result
-    if len(usernames_list) > 0: # cant send 0 users to model
+    if len(usernames_list) > 0: # Can't send 0 users to model
         #print("usernames_list: {0}".format(usernames_list))
 
-        # if process_requests not started yet, start the process_requests task in the background (only once)
+        # If process_requests not started yet, start the process_requests task in the background (only once!)
         if not process_requests_started:
             asyncio.ensure_future(process_requests())
             process_requests_started = True
 
-        future = asyncio.get_event_loop().create_future() 
+        future = asyncio.get_event_loop().create_future()
         # Add usernames_list to the requests_queue
         requests_queue.append((usernames_list, future)) # future is the future object that will be updated with the result from the model
-        response = await future # wait for the future to be updated with the result from the model
-        # response is answer for all users request
-        # update only the users that were in this request
+        # Wait for the future to be updated with the result from the model
+        response = await future 
+        # Response is answer for all users request
+        # Need to: Update only the users that were in this request
         for username in usernames_list:
             if username in response:
                 result[username] = response[username]        
@@ -133,21 +136,23 @@ async def followers_bots(username: str):
     # Else- calculate
     # Assumption sum(bot_prec) = 100
     result, bot_prec = get_bots_in_followers(model, username)
+
+    # Error occured in get_bots_in_followers()
+    if (result is None):
+        return None
     
     # Update redis
     expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
     userStorageValue = {'bot_precentage': bot_prec[1], 'expiration': expirationDate}
     userStorageValue = str(userStorageValue) # Convert dict to string according to redis storage format
     r.set(redis_user_key, userStorageValue)
-    
+
     return {"humans": bot_prec[0], "bots": bot_prec[1]}
-    #return bot_prec
-    #return {"humans": bot_prec[0], "bots": bot_prec[1]}
     
 #app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Update this with the appropriate origins
+    allow_origins=["https://twitter.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
