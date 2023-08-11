@@ -82,7 +82,6 @@ def load_model():
         model = pickle.load(f) # Load the model from the file
     return model
 
-# TODO: later on, consider making a function for prediction of bunch of users
 def model_predict_if_user_is_bot(model, user_metadata):
     """
         Input: 1) model. 2) user_metadata = a dictonary with features as keys and their corresponding values of the username
@@ -90,14 +89,16 @@ def model_predict_if_user_is_bot(model, user_metadata):
     """
     # Create a dataframe with the user_metadata
     df_user_data = pd.DataFrame(user_metadata, index=[0]) 
-
     # Predict the target
-    prediction = model.predict(df_user_data) # Prediction [(0/1),...,] is list of predictions for many users, we only have 1 user
-    # Get prediction and accuracy
-    probability = model.predict_proba(df_user_data) # Probability [[0.1,0.9],...] is list of probabilities for many users, we only have 1 user
+    # NOTE: Prediction [(0/1),...,] is list of predictions for many users, we only have 1 user
+    prediction = model.predict(df_user_data)
     classification = int(prediction[0])
-    accuracy = (probability[0][classification]) * 100 # convert to percentage
-    # stay with 2 digits after the decimal point
+    # Get prediction and accuracy
+    # NOTE: Probability [[x, 1-x],...] is list of probabilities for many users, we only have 1 user (index 0 = human, index 1 = bot)
+    probability = model.predict_proba(df_user_data)
+    # Convert to percentage
+    accuracy = (probability[0][classification]) * 100 
+    # Stay with 2 digits after the decimal point
     accuracy = float("{:.2f}".format(accuracy))
     return {'classification':classification,'accuracy':accuracy} # Return dict:{classification:(0/1), accuracy:(of prediction)}
 
@@ -321,6 +322,7 @@ def get_bots_in_likes(model, tweet_id):
     return (detect_users_model(model, liking_users, True))
 
 model = load_model()
+print(detect_users_model(model, ["stav_1234"]))
 """
 result = get_bots_in_followers(model, "barak_ehud")
 print(result)

@@ -1,5 +1,5 @@
 const spanSelector = '#react-root > div > div > div.css-1dbjc4n.r-18u37iz.r-13qz1uu.r-417010 > main > div > div > div > div.css-1dbjc4n.r-14lw9ot.r-jxzhtn.r-1ljd8xs.r-13l2t4g.r-1phboty.r-16y2uox.r-1jgb5lz.r-11wrixw.r-61z16t.r-1ye8kvj.r-13qz1uu.r-184en5c > div > div:nth-child(3) > div > div > div > div > div.css-1dbjc4n.r-13awgt0.r-18u37iz.r-1w6e6rj';
-const attributeSelector = '[data-testid="UserName"]'
+const attributeSelectorPrec = '[data-testid="UserName"]'
 const infoId = "_bots_prec_info";
 const savedWords = ["home", "explore", "notifications", "messages", , "i"];
 const validForthPath = ["likes", "media", "with_replies"];
@@ -21,6 +21,33 @@ if (typeof(Storage) !== "undefined") {
     console.log("Sorry! No Web Storage support..");
 }
 
+function checkBotSign(username, targetElement) {
+    console.log("in checkBotSign");
+
+    if (targetElement) {
+        console.log("in first if");
+        var spanImage = element.querySelector('[IMAGE="1"]');
+        // There is a bot sign (inside span)- Check belongs
+        if (spanImage) {
+            console.log("in 2 if");
+            console.log(`${spanImage.id}`);
+            if (spanImage.id.startsWith(username)) {
+                console.log("in 2 if");
+                // Span (and info) belongs to current username
+                return;
+            }
+            // Else- the info not corresponds to current username
+            // Delete span
+            spanImage.remove();
+            // Delete/ init attributes
+            var usernameSpan = element.querySelector("div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span");
+            if (usernameSpan){
+                usernameSpan.removeAttribute("id");
+                usernameSpan.removeAttribute(STATUS);
+            }
+        }
+}
+
 /**
  * Adds bots precentage info 
  */
@@ -36,7 +63,6 @@ async function addInfo() {
 
     // Get username from url
     var username = window.location.href.split("/")[3];
-
     console.log(`In profile page of:${username}`);
 
     // Check if info is already displayed for this web page and current account
@@ -44,7 +70,7 @@ async function addInfo() {
     if (isDisplayed == OK)
         return;
     
-    var targetElement = document.querySelector(attributeSelector);
+    var targetElement = document.querySelector(attributeSelectorPrec);
     var localStorageUserKey = `${username}_followers`;
     var botPrecentageData = checkAvailabilityAndExpiration(localStorageUserKey, BOT_PREC_TYPE);
 
@@ -52,17 +78,8 @@ async function addInfo() {
     if (botPrecentageData == MISSING) {
         console.log("Not in local storage");
         
-        // TODO: Delete later
-        /*const requestOptions = {
-            method: 'GET', // or 'POST', 'PUT', etc.
-            mode: 'cors',
-            headers: {
-              'Content-Type': 'application/json' // Modify as needed
-            }
-          };*/
-
         // Make Http request
-        var response = await fetch(`http://127.0.0.1:8000/followersBots/${username}`, requestOptions);
+        var response = await fetch(`http://127.0.0.1:8000/followersBots/${username}`);
 
         // Error occured in fetch
         if (!response)
@@ -80,7 +97,9 @@ async function addInfo() {
 }
 
 /**
- * Check if user is saved in local storage and the required data is up to date,  if it is-return the classification/ bot prec, else- return MISSING
+ * Check if user is saved in local storage and the required data is up to date.
+ * Return: classification/ bot prec (if exist and update) [classification: 0 - human, 1- bot | bot prec: 0-100]
+ *         else- MISSING
  * @param {String} localStorageUserKey 
  */
 function checkAvailabilityAndExpiration(localStorageUserKey, searchType) {
@@ -204,18 +223,18 @@ function addElement(botPrecentage, targetElement, username, container) {
 
     // Add event listeners to the image element
     imgElement.addEventListener('mouseenter', function(event) {
-        showPopup();
         updatePopupPosition(event);
+        showPopup();
     });
     imgElement.addEventListener('mousemove', updatePopupPosition);
     imgElement.addEventListener('mouseleave', hidePopup);
 
     // Add all to container
     container.appendChild(newDiv);
-    container.appendChild(popup);
     container.appendChild(imgElement);
     container.id = infoId;
     container.setAttribute('data-username', username);
+    document.body.appendChild(popup);
 
     /* Add to webpage*/
     // Set the content or attributes of the new div element
