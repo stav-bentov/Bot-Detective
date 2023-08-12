@@ -321,8 +321,8 @@ def get_bots_in_likes(model, tweet_id):
     # Classify users
     return (detect_users_model(model, liking_users, True))
 
-model = load_model()
-print(detect_users_model(model, ["stav_1234"]))
+# model = load_model()
+# print(detect_users_model(model, ["stav_1234"]))
 """
 result = get_bots_in_followers(model, "barak_ehud")
 print(result)

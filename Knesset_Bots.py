@@ -40,6 +40,8 @@ knesset_members = []
 for party in knesset_members_by_party:
     knesset_members += knesset_members_by_party[party]
 
+protest_leaders = ['bogie_yaalon', 'ShikmaBressler', 'barak_ehud', 'RadmanMoshe', 'ZerMoran', 'orlybarlev', 'GONENB1']
+reform_leaders = ['Netanyahu', 'rothmar'] # Netanyahu & Rotman (yariv levin has no twitter account)
 
 number_of_followers_requests = 0 # rate limit: 15 requests per 15 minutes
 number_of_user_lookup_requests = 0 # rate limit: 900 requests per 15 minutes
@@ -241,6 +243,33 @@ def plot_party_leaders_bot_percentage():
     plt.ylabel("Bot Percentage")
     plt.show()
 
+def plot_protesters_leaders_vs_reform_leaders_bot_percentage():
+    protest_leaders_bot_percentage = 0
+    for protest_leader in protest_leaders:
+        protest_leaders_bot_percentage += get_bot_percentage_in_followers(model, protest_leader)
+    protest_leaders_bot_percentage /= len(protest_leaders)
+
+    reform_leaders_bot_percentage = 0
+    for reform_leader in reform_leaders:
+        if reform_leader in knesset_members_bot_percentages:
+            reform_leaders_bot_percentage += knesset_members_bot_percentages[reform_leader]
+        elif reform_leader in ministers_bot_percentages:
+            reform_leaders_bot_percentage += ministers_bot_percentages[reform_leader]
+        else:
+            reform_leaders_bot_percentage += get_bot_percentage_in_followers(model, reform_leader)
+    reform_leaders_bot_percentage /= len(reform_leaders)
+
+    plt.bar(["Protest Leaders", "Reform Leaders"], [protest_leaders_bot_percentage, reform_leaders_bot_percentage], align='center')
+    plt.xticks(["Protest Leaders", "Reform Leaders"])
+    plt.xticks(rotation=90)
+    # add on top of each bar its value
+    for i, v in enumerate([protest_leaders_bot_percentage, reform_leaders_bot_percentage]):
+        plt.text(i - 0.1, v + 0.5, str(round(v, 2))+"%", color='blue', size=8)
+    
+    plt.title("Protest Leaders Vs. Reform Leaders Bot Percentages")
+    plt.xlabel("Protest Leaders Vs. Reform Leaders")
+    plt.ylabel("Bot Percentage")
+    plt.show()
 
 knesset_members_bot_percentages = read_knesset_bot_percentage_file_to_dictionary() # knesset_member: bot_percentage_of_his_followers
 ministers_bot_percentages = read_ministers_bot_percentage_file_to_dictionary() # minister: bot_percentage_of_his_followers
@@ -249,3 +278,4 @@ ministers_bot_percentages = read_ministers_bot_percentage_file_to_dictionary() #
 #plot_ministers_bot_percentages(ministers_bot_percentages)
 #plot_coalition_oposition_bot_percentage()
 #plot_party_leaders_bot_percentage()
+#plot_protesters_leaders_vs_reform_leaders_bot_percentage()
