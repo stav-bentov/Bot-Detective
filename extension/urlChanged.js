@@ -8,9 +8,11 @@ const validForthPath = ["likes", "media", "with_replies"];
  * @param {object} changeInfo       Properties of the tab that changed.
  * @param {tab} tab                 The new state of the tab.
  */
-function sendUrl(tabId, changeInfo, tab) {
+async function sendUrl(tabId, changeInfo, tab) {
     console.log("in chrome.runtime.onUpdated");
     if (changeInfo.url && tab.url.startsWith('https://twitter.com/')) {
+        
+        //chrome.webContentScripts.disable(3);
         chrome.tabs.sendMessage(tabId, {
                 message: 'urlMessage',
                 url: changeInfo.url,

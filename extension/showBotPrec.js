@@ -83,6 +83,7 @@ async function addInfo() {
 
         botPrecentageData = await response.json(); // response.json() is a dict with keys humans, bots
         
+        console.log(`botPrecentageData: ${botPrecentageData}`);
         // Update local Storage
         userInStorageBotPrec.bot_precentage = botPrecentageData;
         userInStorageBotPrec.expiration = expirationDate;
@@ -105,6 +106,7 @@ function checkDisplayedInfo(username) {
             return 1;
         }
         console.log("Need to change info");
+        // Delete element and childs
         while (infoElement.firstChild) {
             console.log(`delete: ${infoElement.firstChild}`);
             infoElement.removeChild(infoElement.firstChild);
@@ -227,6 +229,7 @@ function checkUrl(url){
       https://twitter.com/i/verified-choose
      */
     var urlArray = url.split("/");
+    console.log(`url array: ${urlArray}`);
     if (urlArray.length == 5 || urlArray.length == 4)
     {
         // We are looking for urls: (1) https://twitter.com/username (2) https://twitter.com/username/(likes or media or with replies)
@@ -254,6 +257,7 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
     // Listen for messages sent from background.js
     if (request.message === 'urlMessage') {
       await addInfo();
+      console.log("enable script");
     }
 });
 console.log("Content script listens to messages");

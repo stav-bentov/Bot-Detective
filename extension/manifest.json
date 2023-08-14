@@ -16,15 +16,7 @@
     },
     "content_scripts": [
         {
-            "js": ["sharedScript.js"],
-            "matches": ["https://twitter.com/*"]
-        },
-        {
-            "js": ["showBotPrec.js"],
-            "matches": ["https://twitter.com/*"]
-        },
-        {
-            "js": ["searchAndCalcUsers.js"],
+            "js": ["sharedScript.js", "showBotPrec.js", "searchAndCalcUsers.js"],
             "matches": ["https://twitter.com/*"]
         }
     ],

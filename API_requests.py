@@ -15,7 +15,7 @@ from collections import deque
 # values are stored in the following format:
 # {username: {'classification': result, 'accuracy': accuracy_of_prediction, 'expiration': expirationDate}}
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
-#r.flushall() # delete all keys in redis storage
+r.flushall() # delete all keys in redis storage
 
 ####### INIT MODEL #######
 model = load_model() # load the model once
@@ -75,11 +75,14 @@ async def is_bot(usernames_str: str):
 
     # Update usernames_list to be only the usernames that are not in the redis storage
     for username in usernames_list:
+        # TODO: Add try-catch!
         # If the username is in the redis storage:
         # 1. Get the result from redis storage
         # 2. Remove the username from the list of usernames that need to be calculated (by the model)
         if r.get(username) is not None:
-            userStorageValue = eval(r.get(username)) # Convert string to userStorageValue dict
+            userStorageValue = eval(r.get(username)) # Convert string to dict
+            print("111111111111111111111" ,userStorageValue['expiration'])
+            print("111111111111111111111" ,str(userStorageValue['expiration']))
             expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
             if expirationDate > datetime.datetime.now(): # Redis value is still valid (has not expired yet)
                 result[username] = {} # create new dict for the username
@@ -124,11 +127,11 @@ async def is_bot(usernames_str: str):
 async def followers_bots(username: str):
     # Assumption- there is not username with the name {username}_followers
     redis_user_key = f'{username}_followers'
-
+    print("userkey:" ,redis_user_key)
     # If the result of username is saved and up to date- return its value
     if r.get(redis_user_key) is not None:
         print("in redis!")
-        userStorageValue = r.get(redis_user_key)
+        userStorageValue = eval(r.get(redis_user_key))
         expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
         if expirationDate <= datetime.datetime.now(): # Redis value is still valid (has not expired yet)
             return userStorageValue["bot_precentage"]

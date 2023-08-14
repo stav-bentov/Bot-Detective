@@ -40,7 +40,7 @@ let userInStorageClassification = {
 let mutationQueue = [];
 
 // Clear local storage
-//localStorage.clear(); 
+localStorage.clear(); 
 
 
 /* ============================ "MAIN" ============================ */
