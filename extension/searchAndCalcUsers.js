@@ -28,9 +28,6 @@ var interval = 3000;
 const unknown = -1;
 const bot = 1;
 const human = 0;
-const UPDATED = 1;
-const NOT_UPDATED = 0;
-const STATUS = 'status';
 
 /* An object that will be used for each user's value in the local storage- need to update classification*/
 let userInStorageClassification = {
