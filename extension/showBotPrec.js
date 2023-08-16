@@ -120,7 +120,10 @@ async function addInfo() {
             console.log(`requestClassification= ${requestClassification}`);
             try {
                 // Make Http request
-                response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
+                // response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
+                
+                // VM 
+                response = await fetch(`http://34.165.1.66:3003/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`)
 
                 // Error occured in fetch
                 if (!response) {
