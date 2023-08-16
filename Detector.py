@@ -89,7 +89,7 @@ def load_model():
 def model_predict_if_user_is_bot(model, user_metadata):
     """
         Input: 1) model. 2) user_metadata = a dictonary with features as keys and their corresponding values of the username
-        Return dict:{classification:(0/1), accuracy:(of prediction)}
+        Return dict:{classification:(0/1), accuracy:(of prediction)} 
     """
     # Create a dataframe with the user_metadata
     df_user_data = pd.DataFrame(user_metadata, index=[0]) 
