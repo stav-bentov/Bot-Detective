@@ -17,41 +17,51 @@ if (typeof(Storage) !== "undefined") {
     console.log("Sorry! No Web Storage support..");
 }
 
-/*function checkBotSign(username, targetElement) {
+/* Check if a bot sign is exist, if its not belongs to current user- delete and init attributes
+    Return: true if sign exist and belongs to current user/ sign doesnt exist
+            false if sign exist but not belongs*/
+function isSignBelongs(username, targetElement) {
+    /* Adding bot/human sign process include: 
+        (1) Adding status, id (=username_count) to span = @username
+        (2) Adding bot/ human image with parameters: id (=username_count), SIGN_IMAGE="1"
+        */
     console.log("in checkBotSign");
 
-    if (targetElement) {
-        console.log("in first if");
-        var spanImage = element.querySelector('[IMAGE="1"]');
-        // There is a bot sign (inside span)- Check belongs
-        if (spanImage) {
+    console.log("in first if");
+    // Get image
+    var spanImage = targetElement.querySelector('[SIGN_IMAGE="1"]');
+    if (spanImage) {
+        console.log("in 2 if");
+        console.log(`${spanImage.id}`);
+
+        // Who the image is belongs to 
+        // Belongs to current user
+        if (spanImage.id.startsWith(username)) {
             console.log("in 2 if");
-            console.log(`${spanImage.id}`);
-            if (spanImage.id.startsWith(username)) {
-                console.log("in 2 if");
-                // Span (and info) belongs to current username
-                return;
-            }
-            // Else- the info not corresponds to current username
-            // Delete span
-            spanImage.remove();
-            // Delete/ init attributes
-            var usernameSpan = element.querySelector("div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span");
-            if (usernameSpan){
-                usernameSpan.removeAttribute("id");
-                usernameSpan.removeAttribute(STATUS);
-            }
+            // Span (and info) belongs to current username
+            return true;
         }
-}*/
+        // Else- the info not corresponds to current username
+        // Delete bot image
+        spanImage.remove();
+        
+        // Delete/ init attributes from the span that includes @username
+        var usernameSpan = targetElement.querySelector("div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span");
+        if (usernameSpan){
+            console.log("in 3 if");
+            usernameSpan.removeAttribute("id");
+            usernameSpan.removeAttribute(STATUS);
+        }
+        return false;
+    }
+    return true;
+    
+}
 
 /**
  * Adds bots precentage info 
  */
 async function addInfo() {
-    /* For each user saved in this session, we aim to retain their data for a maximum of 30 days (when date= deletetionDate + 30).
-    After that period, the data will be deleted, and recalculation will be necessary.*/
-    var  expirationDate = new Date();
-    expirationDate.setDate(expirationDate .getDate() + 10);
 
     // If we are not in a profile page
     if (!checkUrl(window.location.href))
@@ -61,38 +71,117 @@ async function addInfo() {
     var username = window.location.href.split("/")[3];
     console.log(`In profile page of:${username}`);
 
+    // request = true if we need to ask from server
+    var requestClassification = false;
+    var requestFollowersPrec = false;
+    // change = true if info is not up to date
+    var changeFollowersPrecInfo = false;
+    var changeClassificationInfo = false;
+
+    var response, botPrecentageData, botClassification;
+
+    /* For each user saved in this session, we aim to retain their data for a maximum of 30 days (when date= deletetionDate + 30).
+    After that period, the data will be deleted, and recalculation will be necessary.*/
+    var expirationDate = new Date();
+    expirationDate.setDate(expirationDate .getDate() + 10);
+
     // Check if info is already displayed for this web page and current account
     var isDisplayed = checkDisplayedInfo(username);
-    if (isDisplayed == OK)
-        return;
+    if (isDisplayed != OK)
+        changeFollowersPrecInfo = true;
     
     var targetElement = document.querySelector(attributeSelectorPrec);
-    var localStorageUserKey = `${username}_followers`;
-    var botPrecentageData = checkAvailabilityAndExpiration(localStorageUserKey, BOT_PREC_TYPE);
-
-    // If not in local storage- calculate
-    if (botPrecentageData == MISSING) {
-        console.log("Not in local storage");
+    if (targetElement) {
+        if (!isSignBelongs(username, targetElement)) {
+            changeClassificationInfo = true;
+            // Sign not belongs, need to add sign bot
+            // Check local storage
+            botClassification = checkAvailabilityAndExpiration(username, USER_BOT_TYPE);
+            // No need for classification request
+            if (botClassification == MISSING) 
+                requestClassification = true;
+        }
         
-        // Make Http request
-        var response = await fetch(`http://127.0.0.1:8000/followersBots/${username}`);
+        // If need to change prec info, check in local storage
+        if (changeFollowersPrecInfo) {
+            // Check followers prec info in local storage
+            var localStorageUserKey = `${username}_followers`;
+            botPrecentageData = checkAvailabilityAndExpiration(localStorageUserKey, BOT_PREC_TYPE);
 
-        // Error occured in fetch
-        if (!response)
-          return;
-
-        botPrecentageData = await response.json(); // response.json() is a dict with keys humans, bots
+            // Not in local storage- calculate
+            if (botPrecentageData == MISSING)
+                requestFollowersPrec = true;
+        }
         
-        console.log(`botPrecentageData: ${botPrecentageData}`);
-        // Update local Storage
-        userInStorageBotPrec.bot_precentage = botPrecentageData;
-        userInStorageBotPrec.expiration = expirationDate;
-        localStorage.setItem(localStorageUserKey, JSON.stringify(userInStorageBotPrec));
+        // If at least one of the requests is required
+        if (requestFollowersPrec || requestClassification) {
+            console.log(`requestFollowersPrec= ${requestFollowersPrec}`);
+            console.log(`requestClassification= ${requestClassification}`);
+            // Make Http request
+            response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
+
+            // Error occured in fetch
+            if (!response) {
+                console.log("Error in fetch showBotPrec");
+                return;
+            }
+
+            requestData = await response.json(); // response.json() is a dict with keys humans, bots
+            console.log(`requestData: ${requestData}`);
+
+            // =================== Update local Storage ===================
+            if (requestClassification && requestData["classification_res"]) {
+                botClassification = requestData["classification_res"]["classification"];
+                userInStorageClassification.classification = requestData["classification_res"]["classification"];
+                userInStorageClassification.accuracy = requestData["classification_res"]["accuracy"];
+                userInStorageClassification.expiration = expirationDate;
+                localStorage.setItem(username, JSON.stringify(userInStorageClassification));
+            }
+            if (requestFollowersPrec && requestData["humans"]) {
+                delete requestData["classification_res"];
+                botPrecentageData = requestData;
+                userInStorageBotPrec.bot_precentage = requestData;
+                userInStorageBotPrec.expiration = expirationDate;
+                localStorage.setItem(localStorageUserKey, JSON.stringify(userInStorageBotPrec));
+            }
+        }
+
+        // Check local storage again
+        if (changeClassificationInfo) {
+            console.log(`changeClassificationInfo`);
+            if (botClassification != MISSING) {
+                console.log(`botClassification != MISSING`);
+                // Now the classification result is in local storage (and in botClassification) then add sign
+                var accuracy = JSON.parse(localStorage.getItem(username)).accuracy;
+                console.log(`botClassification: ${accuracy}`);
+                var usernameSpan = targetElement.querySelector("div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span");
+                if (usernameSpan) {
+                    console.log(`usernameSpan`);
+                    usernameSpan.id = `${username}_from_showBotPrec`;
+                    usernameSpan.setAttribute(STATUS, NOT_UPDATED);
+                    addSign(usernameSpan.id, botClassification, accuracy);
+                }
+                else
+                {
+                    
+                    console.log(`Didnt found!`);
+                }
+            }    
+        }
+        if (changeFollowersPrecInfo) {
+            if (botPrecentageData != MISSING) {
+                addElement(requestData, targetElement, username, isDisplayed);
+            }
+        }
+    
     }
-    console.log(`Got botPrecentage: ${botPrecentageData["bots"]} from local storage`);
-    addElement(botPrecentageData, targetElement, username, isDisplayed);
+    console.log(`Done showBot`);
 }
 
+/* Checks span that includes followers prec information
+    Returns OK if the info is displayed and corresponds to current user
+            element if info is displayed for other user
+            else- null (info is not displayed) */
 function checkDisplayedInfo(username) {
     /* Check if there is already shown info on this user*/
     var infoElement = document.getElementById(infoId);
@@ -103,7 +192,7 @@ function checkDisplayedInfo(username) {
         if (infoElement.getAttribute('data-username') == username)
         {
             console.log("No need to change info");
-            return 1;
+            return OK;
         }
         console.log("Need to change info");
         // Delete element and childs

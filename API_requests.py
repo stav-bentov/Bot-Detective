@@ -59,6 +59,11 @@ async def process_requests():
         # Waits for PERIODIC_REQUESTS_CALCULATION seconds before processing another up to 100 usernames
         await asyncio.sleep(PERIODIC_REQUESTS_CALCULATION)  
 
+def update_redis(username, classification, accuracy, expiration):
+    userStorageValue = {'classification': classification, 'accuracy': accuracy ,'expiration': expiration}
+    userStorageValue = str(userStorageValue) # Convert dict to string according to redis storage format
+    r.set(username, userStorageValue)
+
 app = FastAPI()
 
 @app.get("/")
@@ -75,14 +80,12 @@ async def is_bot(usernames_str: str):
 
     # Update usernames_list to be only the usernames that are not in the redis storage
     for username in usernames_list:
-        # TODO: Add try-catch!
         # If the username is in the redis storage:
         # 1. Get the result from redis storage
         # 2. Remove the username from the list of usernames that need to be calculated (by the model)
-        if r.get(username) is not None:
-            userStorageValue = eval(r.get(username)) # Convert string to dict
-            print("111111111111111111111" ,userStorageValue['expiration'])
-            print("111111111111111111111" ,str(userStorageValue['expiration']))
+        resid_result = r.get(username)
+        if resid_result is not None:
+            userStorageValue = eval(resid_result) # Convert string to dict
             expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
             if expirationDate > datetime.datetime.now(): # Redis value is still valid (has not expired yet)
                 result[username] = {} # create new dict for the username
@@ -92,8 +95,6 @@ async def is_bot(usernames_str: str):
     
     # Calculates users in model and adds to the result
     if len(usernames_list) > 0: # Can't send 0 users to model
-        #print("usernames_list: {0}".format(usernames_list))
-
         # If process_requests not started yet, start the process_requests task in the background (only once!)
         if not process_requests_started:
             asyncio.ensure_future(process_requests())
@@ -107,8 +108,8 @@ async def is_bot(usernames_str: str):
         # Response is answer for all users request
         # Need to: Update only the users that were in this request
         for username in usernames_list:
-            if username in response:
-                result[username] = response[username]        
+            if (response is not None and username in response):
+                result[username] = response[username]   
     else:
         print("error: len(usernames_list) = {0}".format(len(usernames_list)))
 
@@ -116,42 +117,71 @@ async def is_bot(usernames_str: str):
     for username in usernames_list:
         expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
         if username in result:
-            userStorageValue = {'classification': result[username]['classification'], 'accuracy': result[username]['accuracy'] ,'expiration': expirationDate}
-            userStorageValue = str(userStorageValue) # convert dict to string according to redis storage format
-            r.set(username, userStorageValue)
+            update_redis(username, result[username]['classification'], result[username]['accuracy'], expirationDate)
         else:
-            print("error: result = None for user: ", username, " maybe user does not exist anymore?")
+            print("Error: result = None for user: ", username, " maybe user does not exist anymore?")
     return result
 
-@app.get("/followersBots/{username}")
-async def followers_bots(username: str):
-    # Assumption- there is not username with the name {username}_followers
-    redis_user_key = f'{username}_followers'
-    print("userkey:" ,redis_user_key)
-    # If the result of username is saved and up to date- return its value
-    if r.get(redis_user_key) is not None:
-        print("in redis!")
-        userStorageValue = eval(r.get(redis_user_key))
-        expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
-        if expirationDate <= datetime.datetime.now(): # Redis value is still valid (has not expired yet)
-            return userStorageValue["bot_precentage"]
-    
-    # Else- calculate
-    # Assumption sum(bot_prec) = 100
-    result, bot_prec = get_bots_in_followers(model, username)
-
-    # Error occured in get_bots_in_followers()
-    if (result is None):
-        return None
-    
-    # Update redis
+@app.get("/followersBots/")
+async def followers_bots(username: str, classification: bool, followersPrec: bool):
     expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
-    userStorageValue = {'bot_precentage': bot_prec[1], 'expiration': expirationDate}
-    userStorageValue = str(userStorageValue) # Convert dict to string according to redis storage format
-    r.set(redis_user_key, userStorageValue)
 
-    return {"humans": bot_prec[0], "bots": bot_prec[1]}
-    
+    # ========================== Handle followers prec ========================== #
+    bot_prec = [None, None]
+    if (followersPrec):
+        # Assumption- there is not username with the name {username}_followers
+        redis_user_key = f'{username}_followers'
+        print("userkey:" ,redis_user_key)
+        # If the result of username (followers) is saved and up to date- return its value
+        if r.get(redis_user_key) is not None:
+            print("in redis!")
+            userStorageValue = eval(r.get(redis_user_key))
+            expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
+            if expirationDate <= datetime.datetime.now(): # Redis value is still valid (has not expired yet)
+                bot_prec = userStorageValue["bot_precentage"]
+
+        # Not in redis
+        if (bot_prec == [None, None]):
+            # Assumption sum(bot_prec) <= 100
+            result, bot_prec = get_bots_in_followers(model, username)
+
+            # Error occured in get_bots_in_followers()
+            if (result is None and bot_prec is None):
+                print(f"Error occured in get_bots_in_followers() for {username}")
+                return None
+            
+            # If there is at least 1 follower
+            if (result != 0):
+                # Update redis
+                expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
+                userStorageValue = {'bot_precentage': bot_prec[1], 'expiration': expirationDate}
+                userStorageValue = str(userStorageValue) # Convert dict to string according to redis storage format
+                r.set(redis_user_key, userStorageValue)
+
+                # Update redis (classification of each follower)
+                for follower in result:
+                    update_redis(follower, result[follower]['classification'],result[follower]['accuracy'], expirationDate)
+
+    # ========================== Handle user's classification ========================== #
+    classification_result = {username: None}
+    if (classification):
+        if r.get(username) is not None:
+            userStorageValue = eval(r.get(username)) # Convert string to dict
+            expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
+            if expirationDate > datetime.datetime.now(): # Redis value is still valid (has not expired yet)
+                classification_result[username] = {} # Create new dict for the username
+                classification_result[username]['classification'] = userStorageValue['classification']
+                classification_result[username]['accuracy'] = userStorageValue['accuracy']
+        else:
+            classification_result = detect_users_model(model, [username])
+            if (classification_result is not None and classification_result.get(username) is not None):
+                # Update Redis
+                update_redis(username, classification_result[username]['classification'], classification_result[username]['accuracy'], expirationDate)
+
+    if (classification_result is not None):
+        return {"humans": bot_prec[0], "bots": bot_prec[1], "classification_res": classification_result[username]}
+    return {"humans": bot_prec[0], "bots": bot_prec[1], "classification_res": None}
+
 #app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
 app.add_middleware(
     CORSMiddleware,

@@ -208,6 +208,7 @@ def detect_users_model(model, users, get_percentage = False):
 
         for user in users_response:
             meta = get_features(user)
+            # is_bot= {classification,  accuracy}
             is_bot = model_predict_if_user_is_bot(model, meta)
             res[user["screen_name"]] = is_bot
 
@@ -257,6 +258,7 @@ def get_bots_in_followers(model, username):
 
     response = send_Twitter_API_request(url)
 
+    # Error occured
     if (response == None):
         return None, None
 
@@ -288,6 +290,7 @@ def get_bots_in_followers(model, username):
     # RECALL: client.get_users is synchronous by default
     response = send_Twitter_API_request(url)
 
+    # Error ocurred
     if (response == None):
         return None, None
 
@@ -296,7 +299,7 @@ def get_bots_in_followers(model, username):
         is_bot = model_predict_if_user_is_bot(model, meta)
         res[user["screen_name"]] = is_bot
         bot_prec[is_bot["classification"]] += 1
-    
+    print(res)
     return res, bot_prec
     
 def get_bots_in_likes(model, tweet_id):
