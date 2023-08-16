@@ -320,7 +320,7 @@ def get_bots_in_likes(model, tweet_id):
 
     if (response is None):
         return None
-
+    print(response)
     liking_users = response["data"]
     # From list of dict with a key "username" to a list of usernames
     liking_users = [item["username"] for item in liking_users]
@@ -328,12 +328,12 @@ def get_bots_in_likes(model, tweet_id):
     # Classify users
     return (detect_users_model(model, liking_users, True))
 
-# model = load_model()
+"""model = load_model()
+result = get_bots_in_likes(model, "1686067421872865283")
+print(result)"""
 # print(detect_users_model(model, ["stav_1234"]))
 """
-result = get_bots_in_followers(model, "barak_ehud")
-print(result)
-result = get_bots_in_likes(model, "1686067421872865283")
+result = get_bots_in_likes(model, "barak_ehud")
 print(result)
 # meta = get_metadata("YairNetanyahu")
 # print(model_predict_if_user_is_bot(load_model(), meta))"""

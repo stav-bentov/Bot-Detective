@@ -89,6 +89,7 @@ async function addInfo() {
     var isDisplayed = checkDisplayedInfo(username);
     if (isDisplayed != OK)
         changeFollowersPrecInfo = true;
+    console.log(`changeFollowersPrecInfo: ${changeFollowersPrecInfo}`);
     
     var targetElement = document.querySelector(attributeSelectorPrec);
     if (targetElement) {
@@ -117,32 +118,37 @@ async function addInfo() {
         if (requestFollowersPrec || requestClassification) {
             console.log(`requestFollowersPrec= ${requestFollowersPrec}`);
             console.log(`requestClassification= ${requestClassification}`);
-            // Make Http request
-            response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
+            try {
+                // Make Http request
+                response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
 
-            // Error occured in fetch
-            if (!response) {
-                console.log("Error in fetch showBotPrec");
-                return;
+                // Error occured in fetch
+                if (!response) {
+                    console.log("Error in fetch showBotPrec");
+                    return;
+                }
+
+                requestData = await response.json(); // response.json() is a dict with keys humans, bots
+                console.log(`requestData: ${requestData}`);
+
+                // =================== Update local Storage ===================
+                if (requestClassification && requestData["classification_res"]) {
+                    botClassification = requestData["classification_res"]["classification"];
+                    userInStorageClassification.classification = requestData["classification_res"]["classification"];
+                    userInStorageClassification.accuracy = requestData["classification_res"]["accuracy"];
+                    userInStorageClassification.expiration = expirationDate;
+                    localStorage.setItem(username, JSON.stringify(userInStorageClassification));
+                }
+                if (requestFollowersPrec && requestData["humans"]) {
+                    delete requestData["classification_res"];
+                    botPrecentageData = requestData;
+                    userInStorageBotPrec.bot_precentage = requestData;
+                    userInStorageBotPrec.expiration = expirationDate;
+                    localStorage.setItem(localStorageUserKey, JSON.stringify(userInStorageBotPrec));
+                }
             }
-
-            requestData = await response.json(); // response.json() is a dict with keys humans, bots
-            console.log(`requestData: ${requestData}`);
-
-            // =================== Update local Storage ===================
-            if (requestClassification && requestData["classification_res"]) {
-                botClassification = requestData["classification_res"]["classification"];
-                userInStorageClassification.classification = requestData["classification_res"]["classification"];
-                userInStorageClassification.accuracy = requestData["classification_res"]["accuracy"];
-                userInStorageClassification.expiration = expirationDate;
-                localStorage.setItem(username, JSON.stringify(userInStorageClassification));
-            }
-            if (requestFollowersPrec && requestData["humans"]) {
-                delete requestData["classification_res"];
-                botPrecentageData = requestData;
-                userInStorageBotPrec.bot_precentage = requestData;
-                userInStorageBotPrec.expiration = expirationDate;
-                localStorage.setItem(localStorageUserKey, JSON.stringify(userInStorageBotPrec));
+            catch (error) {
+                console.log(`Error in addinfo for ${username}`);
             }
         }
 
@@ -290,7 +296,7 @@ function addElement(botPrecentage, targetElement, username, container) {
 
     /* Add to webpage*/
     // Set the content or attributes of the new div element
-    newDiv.textContent = `${botPrecentage["bots"]} out of 100 random followers are bots`;
+    newDiv.textContent = `${botPrecentage["bots"]} out of ${numFollowersChecked} random followers are bots`;
 
     // Insert the new div element after the target element (only if the container hasnt been displayed yet)
     if (InjectContainer == 1)

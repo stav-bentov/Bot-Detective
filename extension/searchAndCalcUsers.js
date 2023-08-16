@@ -153,8 +153,9 @@ async function makeRequests() {
             userInStorageClassification.expiration = expirationDate;
             localStorage.setItem(user, JSON.stringify(userInStorageClassification));
         }
-    } catch (error) {
-        console.log(`error`);
+    } 
+    catch (error) {
+        console.log(`Error in makeRequests for ${username}`);
     }
 }
 
