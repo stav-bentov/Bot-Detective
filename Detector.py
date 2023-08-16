@@ -69,6 +69,10 @@ def likelihood(str: str) -> float:
     num_bigrams = len(bigrams_list)
     num_dif_bigrams = len(bigrams_likelihood)
     
+    # len(str) <= 1
+    if (num_bigrams == 0):
+        return 0
+
     biagrams_mul = math.prod([value * (1/num_bigrams) for value in bigrams_likelihood.values()])
 
     # geometric-mean defenition
