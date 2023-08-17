@@ -77,7 +77,7 @@ def read_root():
 async def is_bot(usernames_str: str):
     global process_requests_started
     result = {} # Keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
-
+    print("usernames_str = ", usernames_str)
     usernames_list = usernames_str.split(",")
     #print("len before remove (usernames_list) = {0}".format(len(usernames_list)))
 
