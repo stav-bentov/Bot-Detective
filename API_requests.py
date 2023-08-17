@@ -48,6 +48,7 @@ async def process_requests():
         if requests_queue:
             all_users, number_of_calculated_requests = get_all_usernames_on_queue() 
             # Process the request and calculate the users classification
+            print("all_users = ", all_users)
             users_classification = detect_users_model(model, all_users)
 
             print("len(users_classification) = ", len(users_classification))
