@@ -204,6 +204,9 @@ def detect_users_model(model, users, get_percentage = False):
         # RECALL: client.get_users is synchronous by default
         users_response = send_Twitter_API_request(url)
         
+        print("url= ", url)
+        print("users_response= ", users_response)
+        print("res= ", res)
         # Error occured in send_Twitter_API_request()- delete this users to avoid future errors
         if (users_response is None):
             for user in users[i:i + req_max_size]:
