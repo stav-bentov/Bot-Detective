@@ -267,7 +267,7 @@ def get_bots_in_followers(model, username):
         return None, None
 
     users_ids = response["ids"]
-    print("users_ids= ", users_ids)
+    #print("users_ids= ", users_ids)
 
     # User has no followers
     if (len(users_ids) == 0):
@@ -275,14 +275,14 @@ def get_bots_in_followers(model, username):
     
     # Get 100 random followers (or |followers| if |followers| < 100)
     users_sample = random.sample(users_ids, min(100, len(users_ids)))
-    print("users_sample= ", users_sample)
+    #print("users_sample= ", users_sample)
     
     res = {}
     # bot_prec[0] = number of humans, bot_prec[1] = number of bots
     bot_prec = [0, 0]
     
     users_sample = ','.join(map(str, users_sample))
-    print("users_sample= ", users_sample)
+    #print("users_sample= ", users_sample)
     ids_req = f"user_id={users_sample}"
 
     #v1
