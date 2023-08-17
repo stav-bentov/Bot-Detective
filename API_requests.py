@@ -15,7 +15,7 @@ from collections import deque
 # values are stored in the following format:
 # {username: {'classification': result, 'accuracy': accuracy_of_prediction, 'expiration': expirationDate}}
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
-#r.flushall() # delete all keys in redis storage
+r.flushall() # delete all keys in redis storage
 
 ####### INIT MODEL #######
 model = load_model() # load the model once
