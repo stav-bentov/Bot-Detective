@@ -141,7 +141,7 @@ async function makeRequests() {
         // For TAMIR - VM Flask
         // const response = await fetch(`https://34.165.1.66:3003/isBot/${user}`);
         // For FastAPI - VM FastAPI
-        const response = await fetch(`https://34.165.1.66:3003/isBot/${user}`);
+        const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
 
         const data = await response.json(); // data is dict of dicts: {username:{classification:class, accuracy:acc}}
         console.log(`data recived: ${data}`);

@@ -46,14 +46,9 @@ async def process_requests():
     """
     while True: 
         if requests_queue:
-            print("requests_queue = ", requests_queue)
-            print("len(requests_queue) = ", len(requests_queue))
             all_users, number_of_calculated_requests = get_all_usernames_on_queue() 
             # Process the request and calculate the users classification
-            print("all_users = ", all_users)
             users_classification = detect_users_model(model, all_users)
-
-            print("len(users_classification) = ", len(users_classification))
             # Update the future object with the result from the model and pop from queue
             for i in range(number_of_calculated_requests):
                 future = requests_queue.popleft()[1]
@@ -77,7 +72,6 @@ def read_root():
 async def is_bot(usernames_str: str):
     global process_requests_started
     result = {} # Keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
-    print("usernames_str = ", usernames_str)
     usernames_list = usernames_str.split(",")
     #print("len before remove (usernames_list) = {0}".format(len(usernames_list)))
 
@@ -105,8 +99,6 @@ async def is_bot(usernames_str: str):
 
         future = asyncio.get_event_loop().create_future()
         # Add usernames_list to the requests_queue
-        print("len(usernames_list) = ", len(usernames_list))
-        print("usernames_list = ", usernames_list)
         requests_queue.append((usernames_list, future)) # future is the future object that will be updated with the result from the model
         # Wait for the future to be updated with the result from the model
         response = await future 
