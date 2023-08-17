@@ -303,7 +303,7 @@ def get_bots_in_followers(model, username):
         is_bot = model_predict_if_user_is_bot(model, meta)
         res[user["screen_name"]] = is_bot
         bot_prec[is_bot["classification"]] += 1
-    print(res)
+    #print(res)
     return res, bot_prec
     
 def get_bots_in_likes(model, tweet_id):
@@ -320,7 +320,6 @@ def get_bots_in_likes(model, tweet_id):
 
     if (response is None):
         return None
-    print(response)
     liking_users = response["data"]
     # From list of dict with a key "username" to a list of usernames
     liking_users = [item["username"] for item in liking_users]
