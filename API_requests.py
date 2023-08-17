@@ -46,6 +46,8 @@ async def process_requests():
     """
     while True: 
         if requests_queue:
+            print("requests_queue = ", requests_queue)
+            print("len(requests_queue) = ", len(requests_queue))
             all_users, number_of_calculated_requests = get_all_usernames_on_queue() 
             # Process the request and calculate the users classification
             print("all_users = ", all_users)
