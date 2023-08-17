@@ -105,6 +105,8 @@ async def is_bot(usernames_str: str):
 
         future = asyncio.get_event_loop().create_future()
         # Add usernames_list to the requests_queue
+        print("len(usernames_list) = ", len(usernames_list))
+        print("usernames_list = ", usernames_list)
         requests_queue.append((usernames_list, future)) # future is the future object that will be updated with the result from the model
         # Wait for the future to be updated with the result from the model
         response = await future 
