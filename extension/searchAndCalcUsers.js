@@ -33,7 +33,7 @@ const human = 0;
 let mutationQueue = [];
 
 // Clear local storage
-localStorage.clear(); 
+// localStorage.clear(); 
 
 
 /* ============================ "MAIN" ============================ */
