@@ -192,7 +192,6 @@ app.add_middleware(
 )
 
 if __name__ == "__main__":
-    #asyncio.run(uvicorn.run(app, port=8000))
     # Local ONLY:
     #uvicorn.run(app, port=8000)
     # VM:
