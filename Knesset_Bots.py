@@ -163,6 +163,7 @@ def plot_parties_bot_percentages(knesset_members_bot_percentages):
     plt.bar(range(len(parties_bot_percentages)), list(parties_bot_percentages.values()), align='center')
     plt.xticks(range(len(parties_bot_percentages)), list(parties_bot_percentages.keys()))
 
+    print("parties_bot_percentages: ", parties_bot_percentages)
     plt.xticks(rotation=90)
     # add on top of each bar its value
     for i, v in enumerate(parties_bot_percentages.values()):
@@ -191,6 +192,9 @@ def plot_ministers_bot_percentages(ministers_bot_percentages):
     plt.bar(range(len(ministers_bot_percentages)), list(ministers_bot_percentages.values()), align='center')
     plt.xticks(range(len(ministers_bot_percentages)), list(ministers_bot_percentages.keys()))
     plt.xticks(rotation=90)
+
+    print("ministers_bot_percentages: ", ministers_bot_percentages)
+
     # add on top of each bar its value
     for i, v in enumerate(ministers_bot_percentages.values()):
         plt.text(i - 0.5, v + 0.5, str(round(v, 2))+"%", color='blue', size=8)

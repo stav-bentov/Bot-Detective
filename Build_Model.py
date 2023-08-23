@@ -1,16 +1,17 @@
-import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
-import pickle # for saving the model
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, cross_val_predict
 from sklearn.naive_bayes import GaussianNB
 from sklearn.calibration import LinearSVC
+from sklearn.model_selection import train_test_split
+from sklearn.inspection import permutation_importance
+from sklearn.metrics import confusion_matrix
+import pickle # for saving the model
+import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.linear_model import LogisticRegression
-from sklearn.inspection import permutation_importance
+import seaborn as sns
+import shap
 
 def grid_search_nb(X, Y):
     """
@@ -139,8 +140,102 @@ def check_features():
     plt.barh([f_names[i] for i in sorted_idx], perm_importance.importances_mean[sorted_idx])
     plt.xlabel("Permutation Importance")
     plt.show()
+
+def plot_feature_importance():
+    """
+    Generate the model according to the collected dataset in 'Datasets/all_df.csv'
+    and returns it
+    """
+    # Read the data
+    df = pd.read_csv('Datasets/all_df.csv')
+
+    # Split features and target
+    X = df.drop('target', axis=1)
+    Y = df['target']
+
+    # Trains the model
+    model = RandomForestClassifier(n_estimators=200, max_depth=5, random_state=1)
+    model.fit(X, Y)
+
+    # Get feature importances from the trained model
+    feature_importances = model.feature_importances_
+
+    # Get the names of the features
+    feature_names = X.columns
+
+    # Sort feature importances in descending order
+    sorted_indices = feature_importances.argsort()[::-1]
+    sorted_importances = feature_importances[sorted_indices]
+    sorted_feature_names = feature_names[sorted_indices]
+
+    # print the feature importances in format of (feature_name, feature_importance) 
+    for feature in zip(sorted_feature_names, sorted_importances):
+        print(feature)
+
+    # Create the feature importance plot
+    plt.figure(figsize=(10, 6))
+    plt.bar(range(len(sorted_importances)), sorted_importances, tick_label=sorted_feature_names)
+    plt.title("Feature Importance Plot")
+    plt.xlabel("Feature Names")
+    plt.ylabel("Feature Importance")
+    plt.xticks(rotation=45, ha="right")
+    plt.tight_layout()
+
+    plt.show()
+
+def plot_Confusion_Matrix_Heatmap():
+    """
+    Generate a confusion matrix heatmap using 5-fold cross-validation with the dataset in 'Datasets/all_df.csv'
+    """
+    # Read the data
+    df = pd.read_csv('Datasets/all_df.csv')
+
+    # Split features and target
+    X = df.drop('target', axis=1)
+    Y = df['target']
+
+    # Trains the model
+    model = RandomForestClassifier(n_estimators=200, max_depth=5, random_state=1)
+
+    # Predict using 5-fold cross-validation
+    Y_pred = cross_val_predict(model, X, Y, cv=5)
+
+    # Generate confusion matrix
+    cm = confusion_matrix(Y, Y_pred)
+    # print the confusion matrix results
+    print(cm)
+    # Create a heatmap for the confusion matrix
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False)
+    plt.title("Confusion Matrix Heatmap (5-Fold CV)")
+    plt.xlabel("Predicted Labels")
+    plt.ylabel("True Labels")
+    plt.show()
     
+def plot_shap():
+    # Load your dataset
+    df = pd.read_csv('Datasets/all_df.csv')
+    X = df.drop('target', axis=1)
+    Y = df['target']
+
+    # Train the model
+    model = RandomForestClassifier(n_estimators=200, max_depth=5, random_state=1)
+    model.fit(X, Y)
+
+    # Create a SHAP explainer
+    explainer = shap.TreeExplainer(model)
+    sv = explainer(X)
+    exp = shap.Explanation(sv.values[:,:,1], sv.base_values[:,1], data=X.values, feature_names=X.columns)
+    idx = 0
+    # print the explanation
+    print(exp) 
+    # plot the explanation
+    shap.waterfall_plot(exp[idx])
+
 
 #check_features()
+#plot_feature_importance()
+#plot_Confusion_Matrix_Heatmap()
+#plot_shap()
 
 create_and_save_model()
