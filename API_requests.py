@@ -172,6 +172,7 @@ async def followers_bots(username: str, classification: bool, followersPrec: boo
                 classification_result[username]['accuracy'] = userStorageValue['accuracy']
         else:
             classification_result = detect_users_model(model, [username])
+            expirationDate = datetime.datetime.now() + datetime.timedelta(days=10) # 10 days from now
             if (classification_result is not None and classification_result.get(username) is not None):
                 # Update Redis
                 update_redis(username, classification_result[username]['classification'], classification_result[username]['accuracy'], expirationDate)
@@ -180,8 +181,8 @@ async def followers_bots(username: str, classification: bool, followersPrec: boo
         return {"humans": bot_prec[0], "bots": bot_prec[1], "classification_res": classification_result[username]}
     return {"humans": bot_prec[0], "bots": bot_prec[1], "classification_res": None}
 
-# VM ONLY
-app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
+# VM ONLY- Remove comment
+#app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
 
 app.add_middleware(
     CORSMiddleware,
@@ -193,6 +194,6 @@ app.add_middleware(
 
 if __name__ == "__main__":
     # Local ONLY:
-    #uvicorn.run(app, port=8000)
+    uvicorn.run(app, port=8000)
     # VM:
-    uvicorn.run(app, host="0.0.0.0", port=3003, ssl_keyfile="./server.key", ssl_certfile="./server.crt")
+    #uvicorn.run(app, host="0.0.0.0", port=3003, ssl_keyfile="./server.key", ssl_certfile="./server.crt")

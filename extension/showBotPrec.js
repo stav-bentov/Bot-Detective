@@ -25,9 +25,6 @@ function isSignBelongs(username, targetElement) {
         (1) Adding status, id (=username_count) to span = @username
         (2) Adding bot/ human image with parameters: id (=username_count), SIGN_IMAGE="1"
         */
-    console.log("in checkBotSign");
-
-    console.log("in first if");
     // Get image
     var spanImage = targetElement.querySelector('[SIGN_IMAGE="1"]');
     if (spanImage) {
@@ -80,10 +77,10 @@ async function addInfo() {
 
     var response, botPrecentageData, botClassification;
 
-    /* For each user saved in this session, we aim to retain their data for a maximum of 30 days (when date= deletetionDate + 30).
+    /* For each user saved in this session, we aim to retain their data for a maximum of 10 days (when date= deletetionDate + 30).
     After that period, the data will be deleted, and recalculation will be necessary.*/
     var expirationDate = new Date();
-    expirationDate.setDate(expirationDate .getDate() + 10);
+    expirationDate.setDate(expirationDate.getDate() + 10);
 
     // Check if info is already displayed for this web page and current account
     var isDisplayed = checkDisplayedInfo(username);
@@ -121,10 +118,10 @@ async function addInfo() {
             try {
                 // Make Http request
                 // LOCAL:
-                // response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
+                 response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
                 
                 // VM: 
-                response = await fetch(`https://34.165.1.66:3003/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`)
+                //response = await fetch(`https://34.165.1.66:3003/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`)
 
                 // Error occured in fetch
                 if (!response) {

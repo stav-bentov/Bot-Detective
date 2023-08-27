@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
-import shap
+#import shap
 
 def grid_search_nb(X, Y):
     """
@@ -38,7 +38,7 @@ def grid_search_rf(X, Y):
     rf = RandomForestClassifier()
     grid_space= {'n_estimators': [100, 200, 300, 400, 500], 
                  'max_depth': [5, 10, 15, 20], 
-                 'min_samples_split': [2, 5, 10]}
+                 'min_samples_split': [0, 2, 5, 10]}
         
     grid = GridSearchCV(estimator = rf,param_grid = grid_space,cv = 5, scoring ='accuracy')
     model_grid = grid.fit(X, Y)
@@ -98,7 +98,7 @@ def create_and_save_model():
     Y = df['target']
     
     #find_best_model(X, Y)
-    #grid_search_rf(X, Y)
+    grid_search_rf(X, Y)
 
     # Trains the model
     model = RandomForestClassifier(n_estimators = 200, max_depth = 5, random_state = 1)
@@ -113,6 +113,9 @@ def create_and_save_model():
         pickle.dump(model, f) # Save the model in the file
 
 def check_features():
+    """
+        Generate the importance of each feature in the model
+    """
     df = pd.read_csv('Datasets/all_df.csv')
 
     # Split features and target
@@ -212,7 +215,7 @@ def plot_Confusion_Matrix_Heatmap():
     plt.ylabel("True Labels")
     plt.show()
     
-def plot_shap():
+"""def plot_shap():
     # Load your dataset
     df = pd.read_csv('Datasets/all_df.csv')
     X = df.drop('target', axis=1)
@@ -230,7 +233,7 @@ def plot_shap():
     # print the explanation
     print(exp) 
     # plot the explanation
-    shap.waterfall_plot(exp[idx])
+    shap.waterfall_plot(exp[idx])"""
 
 
 #check_features()

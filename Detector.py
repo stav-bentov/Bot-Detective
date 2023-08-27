@@ -12,6 +12,7 @@ import requests
 import os
 import json
 import random
+import numpy as np
 
 # ========================================== Define variables ========================================== #
 sys.stdin.reconfigure(encoding='utf-8')
@@ -100,6 +101,7 @@ def model_predict_if_user_is_bot(model, user_metadata):
     # Get prediction and accuracy
     # NOTE: Probability [[x, 1-x],...] is list of probabilities for many users, we only have 1 user (index 0 = human, index 1 = bot)
     probability = model.predict_proba(df_user_data)
+
     # Convert to percentage
     accuracy = (probability[0][classification]) * 100 
     # Stay with 2 digits after the decimal point
@@ -139,6 +141,26 @@ def get_features(response_data):
             x2 = max(user_age if calc[2] == "user_age" else response_data[calc[2]], 1)
             user_metadata[feature] = calc_function(x1, x2)
     return user_metadata
+
+def get_important_features(df_user_data, classification):
+    """
+        Given a usermetadata and it's classification, prints the importance of each feature and affect amount on the classification
+    """
+    # Get  most important features
+    feature_importances = model.feature_importances_
+    print(feature_importances)
+    # Get indices of the top features contributing to the prediction
+    top_feature_indices = np.argsort(feature_importances)[::-1]
+    print(top_feature_indices)
+    df_user_data_values= df_user_data.values.flatten().tolist()
+    df_user_data_keys= df_user_data.columns.tolist()
+
+    # Print the most important features and their values for the predicted class
+    print(f"Predicted Class: {classification}")
+    print("Top Features and Their Values:")
+    for feature_idx in top_feature_indices:
+        feature_value = df_user_data_values[feature_idx]
+        print(f"{df_user_data_keys[feature_idx]} {feature_idx+1}: {feature_value:.4f} (Importance: {feature_importances[feature_idx]:.4f})")
 
 # !Not in use!
 def detect_users(users):
@@ -327,12 +349,12 @@ def get_bots_in_likes(model, tweet_id):
     # Classify users
     return (detect_users_model(model, liking_users, True))
 
-"""model = load_model()
-result = get_bots_in_likes(model, "1686067421872865283")
-print(result)"""
-# print(detect_users_model(model, ["stav_1234"]))
-"""
-result = get_bots_in_likes(model, "barak_ehud")
-print(result)
+#model = load_model()
+#result = get_bots_in_likes(model, "1686067421872865283")
+#print(result)
+#print(detect_users_model(model, ["igalmosko", "YunaLeibzon", "MatanHodorov"]))
+
+#result = get_bots_in_likes(model, "barak_ehud")
+#print(result)
 # meta = get_metadata("YairNetanyahu")
 # print(model_predict_if_user_is_bot(load_model(), meta))"""

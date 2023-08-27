@@ -135,9 +135,9 @@ async function makeRequests() {
         // API request for detect human/bot (runs the model on username)
 
         // LOCAL: FastAPI
-        // const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
+        const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
         // VM: FastAPI
-        const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
+        //const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
 
         // NOT IN USE: //
         // LOCAL: Flask
