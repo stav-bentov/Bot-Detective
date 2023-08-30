@@ -22,8 +22,9 @@ For the model creation procedure, you can refer to the Build_model.py. This scri
 ## Features
 Our extension include 2 main feature based on bot classification:
 - Bot/Human indictor
-  
-<img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/gifs/bots%20in%20reposted%20by.gif" width='500px'>
+  <p align="center">
+    <img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/gifs/bots%20in%20reposted%20by.gif" width='500px'>
+  </p>  
 - Number of bots in 100 randomly chosen followers
 
 <img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/gifs/bot%20and%20followers.gif" width='500px'>
