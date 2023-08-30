@@ -51,14 +51,7 @@ For using the extension follow the next steps:
 1. Clone reposetory.
 2. Open Chrome Extensions on developer mode.
 3. Click on Load unpack and choose the cloned project.
-4. You will need to activate Resid in the server (local or our Google Cloud Server):
-```
-  sudo service redis-server start
-  password: [enter password]
-  redis-cli
-```
-
-To run our extension using the local server make sure that the following comments are underlined:
+4. To run our extension using the local server make sure that the following comments are underlined:
 - In API_requests.py: 
 Make this lines in a comment:
    ``` 
@@ -89,12 +82,18 @@ Make sure this line is not in comment:
     response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
    ```
 *note: For running our Google Chrome server- do the oopisite (regarding the comments)*
-5. Run on the server:
+5. Activate Resid in the server (local or our Google Cloud Server):
+```
+  sudo service redis-server start
+  password: [enter password]
+  redis-cli
+```
+6. Run on the server:
 ``` 
     python API_requests.py
 ```
-6. Go back to Chrome Extension for developer and activate the extension.
-7. You can browse through Twitter and have fun with Bot Detective.
+7. Go back to Chrome Extension for developer and activate the extension.
+8. You can browse through Twitter and have fun with Bot Detective.
 
 ## Visual Overview
 - #### User's classifications
