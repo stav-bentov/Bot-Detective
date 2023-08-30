@@ -88,7 +88,7 @@ Make sure this line is not in comment:
 
 ## Visual Overview
 - #### User's classifications
-We can indicators showing while browsing, each with a popup including warning and accuracy of classification.
+While browsing- indicators appear, each accompanied by a popup displaying warnings and the classification accuracy.
 <p align="center">  <img src="Gifs/bots in reposted by.gif" align="center"> </p> 
 
 - #### General Browsing Experience
