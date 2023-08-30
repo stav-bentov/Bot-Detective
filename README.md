@@ -1,7 +1,5 @@
 # Bot Detective Chrome Extension
 
-<img src="extension/img/ex_img.png" width="300" align=”center”/>
-
 ## Introduction
 Bot Detective is a machine learning project that classifies Twitter users as bots or not bots based on user metadata. This project was developed to help people distinguish between real users and automated accounts, which can be used for spamming, spreading false information, and manipulating public opinion.
 
@@ -16,3 +14,6 @@ The model was developed using Python and various libraries such as pandas and sc
 ## Usage
 
 To run our extension using the local server make sure that the followinf comments are underlined:
+
+
+<img src="extension/img/ex_img.png" width="300" align=”center”/>
