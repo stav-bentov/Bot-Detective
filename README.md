@@ -87,9 +87,9 @@ Make sure this line is not in comment:
 *note: For running our Google Chrome server- do the oopisite (regarding the comments)*
 
 ## Visual Overview
-- #### User who classified as bot
-We can see a bot sign added with a proper popup presents a warning and accuracy of the classification.
-<p align="center">  <img src="Gifs/bot and followers.gif" width='500px' align="center"> </p> 
+- #### User's classifications
+We can indicators showing while browsing, each with a popup including warning and accuracy of classification.
+<p align="center">  <img src="Gifs/bots in reposted by.gif" width='500px' align="center"> </p> 
 
 - #### General Browsing Experience
 <p align="center">  <img src="Gifs/part action gif.gif" width='500px' align="center"> </p> 
