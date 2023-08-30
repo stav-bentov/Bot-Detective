@@ -88,5 +88,6 @@ Make sure this line is not in comment:
 *note: For running our Google Chrome server- do the oopisite (regarding the comments)*
 
 ## Visual Overview
-### Feature 1: [Feature Name]
-![Feature 1](Gifs/all actions.gif)
+#### User who classified as bot
+<p align="center">  <img src="Gifs/all actions.gif" width='500px' align="center"> 
+ </p> 
