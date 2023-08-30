@@ -89,4 +89,4 @@ Make sure this line is not in comment:
 
 ## Visual Overview
 ### Feature 1: [Feature Name]
-![Feature 1](/Gifs/all actions.gif)
+![Feature 1](Gifs/all actions.gif)
