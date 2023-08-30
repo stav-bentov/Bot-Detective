@@ -78,8 +78,6 @@ Make sure this line is not in comment:
   ``` 
     response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
    ```
-<pre>
-For running our Google Chrome server- do the oopisite (regarding the comments)
-</pre>
-[comment]: <> (This is a comment, it will not be included)
+*note:* For running our Google Chrome server- do the oopisite (regarding the comments)
+
 <img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/Gifs/part%20action%20gif.gif" width='500px' align="center"> 
