@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="extension/img/ex_img.png" width="300" />
+  <img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/Photos/logo_img.png" width="300" />
 </p>  
 
 # Bot Detective Chrome Extension
