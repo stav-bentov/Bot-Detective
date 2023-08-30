@@ -16,4 +16,4 @@ The model was developed using Python and various libraries such as pandas and sc
 To run our extension using the local server make sure that the followinf comments are underlined:
 
 
-<img src="extension/img/ex_img.png" width="300" align=”center”/>
+<img src="extension/img/ex_img.png" width="300" align=”right”/>
