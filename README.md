@@ -48,6 +48,13 @@ Python 3.8 with the following dependencies:
 - seaborn
 
 ## Usage
+For using the extension you will need to activate Resid in the server (local or our Google Cloud Server):
+```
+  sudo service redis-server start
+  password: [enter password]
+  redis-cli
+```
+
 To run our extension using the local server make sure that the following comments are underlined:
 - In API_requests.py: 
 Make this lines in a comment:
