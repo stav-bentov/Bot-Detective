@@ -27,8 +27,57 @@ Our extension include 2 main feature based on bot classification:
 #### Paper 
 [Link to the paper]TODO: Put a link to the article
 
-## Usage
+## Requirements:
 
-To run our extension using the local server make sure that the followinf comments are underlined:
+Python 3.8 with the following dependencies:
+- fastapi
+- uvicorn
+- redis
+- pickle
+- pandas
+- nltk.util
+- requests
+- numpy
+- matplotlib
+- sklearn.ensemble
+- sklearn.model_selection
+- sklearn.naive_bayes
+- sklearn.calibration
+- sklearn.inspection
+- sklearn.metrics
+- seaborn
+
+## Usage
+To run our extension using the local server make sure that the following comments are underlined:
+- In API_requests.py: 
+Make this lines in a comment:
+   ``` 
+    app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
+   ...
+    uvicorn.run(app, host="0.0.0.0", port=3003, ssl_keyfile="./server.key", ssl_certfile="./server.crt")
+    ```
+Make sure this line is not in comment:
+  ``` 
+      uvicorn.run(app, port=8000)
+   ```
+- In searchAndCalcUsers.js:
+Make this lines in a comment:
+   ``` 
+      const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
+    ```
+Make sure this line is not in comment:
+  ``` 
+    const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
+   ```
+- In showBotPrec.js:
+Make this lines in a comment:
+   ``` 
+     response = await fetch(`https://34.165.1.66:3003/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
+    ```
+Make sure this line is not in comment:
+  ``` 
+    response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
+   ```
+
 
 <img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/Gifs/part%20action%20gif.gif" width='500px' align="center"> 
