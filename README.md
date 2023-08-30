@@ -81,5 +81,5 @@ Make sure this line is not in comment:
 <pre>
 For running our Google Chrome server- do the oopisite (regarding the comments)
 </pre>
-
+[comment]: <> (This is a comment, it will not be included)
 <img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/Gifs/part%20action%20gif.gif" width='500px' align="center"> 
