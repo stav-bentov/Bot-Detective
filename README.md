@@ -15,8 +15,10 @@ The model was developed using Python and various libraries such as pandas and sc
 
 ## Features
 - Bot/Human indictor
+  <img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/gifs/bots%20in%20reposted%20by.gif" width='500px'>
 - Number of bots in 100 randomly chosen followers
-
+  <img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/gifs/bot%20and%20followers.gif" width='500px'>
+  <img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/gifs/all%20actions.gif" width='500px'>
 #### Paper 
 [Link to the paper]TODO: Put a link to the article
 
