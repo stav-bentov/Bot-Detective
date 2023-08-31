@@ -25,8 +25,7 @@ Our extension include 2 main feature based on bot classification:
 - **Number of bots in 100 randomly chosen followers:** For every user, an analysis of the amount of bots among 100 randomly selected followers is displayed in Profile page.<p align="center"><img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/Gifs/bot%20and%20followers.gif"></p>
 
 #### Paper
-Pik-Mai Hui Filippo Menczer Kai-Cheng Yang, Onur Varol. 2019. Scalable and Generalizable Social Bot Detection through Data Selection. (2019).
-https://doi.org/10.1609/aaai.v34i01.5460 
+**TODO [ADD OUR TECHNICAL REPORT]**
 
 
 ## Requirements:

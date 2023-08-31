@@ -108,8 +108,6 @@ async def is_bot(usernames_str: str):
         for username in usernames_list:
             if (response is not None and username in response):
                 result[username] = response[username]   
-    else:
-        print("error: len(usernames_list) = {0}".format(len(usernames_list)))
 
     # Update redis storage with the **new** usernames and their results
     for username in usernames_list:
