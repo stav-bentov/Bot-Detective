@@ -27,7 +27,7 @@ Our extension include 2 main feature based on bot classification:
 #### Paper
 Pik-Mai Hui Filippo Menczer Kai-Cheng Yang, Onur Varol. 2019. Scalable and Generalizable Social Bot Detection through Data Selection. (2019).
 https://doi.org/10.1609/aaai.v34i01.5460 
-**[Link to the paper]TODO: Put a link to the article**
+
 
 ## Requirements:
 Python 3.8 with the following dependencies:
