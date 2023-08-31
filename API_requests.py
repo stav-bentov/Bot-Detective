@@ -61,7 +61,10 @@ async def process_requests():
 def update_redis(username, classification, accuracy, expiration):
     userStorageValue = {'classification': classification, 'accuracy': accuracy ,'expiration': expiration}
     userStorageValue = str(userStorageValue) # Convert dict to string according to redis storage format
-    r.set(username, userStorageValue)
+    try:
+        r.set(username, userStorageValue)
+    except (redis.exceptions.ConnectionError, redis.exceptions.ResponseError) as e:
+        print("Error with Redis (Verify the Redis has started):", e)
 
 app = FastAPI()
 
@@ -81,33 +84,45 @@ async def is_bot(usernames_str: str):
         # If the username is in the redis storage:
         # 1. Get the result from redis storage
         # 2. Remove the username from the list of usernames that need to be calculated (by the model)
-        resid_result = r.get(username)
-        if resid_result is not None:
-            userStorageValue = eval(resid_result) # Convert string to dict
-            expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
-            if expirationDate > datetime.datetime.now(): # Redis value is still valid (has not expired yet)
-                result[username] = {} # create new dict for the username
-                result[username]['classification'] = userStorageValue['classification']
-                result[username]['accuracy'] = userStorageValue['accuracy']
-                usernames_list.remove(username) 
+        try:
+            resid_result = r.get(username)
+        
+            if resid_result is not None:
+                userStorageValue = eval(resid_result) # Convert string to dict
+                expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
+                if expirationDate > datetime.datetime.now(): # Redis value is still valid (has not expired yet)
+                    result[username] = {} # create new dict for the username
+                    result[username]['classification'] = userStorageValue['classification']
+                    result[username]['accuracy'] = userStorageValue['accuracy']
+                    usernames_list.remove(username)
+        except (redis.exceptions.ConnectionError, redis.exceptions.ResponseError, KeyError) as e:
+            print("Error with Redis (Verify the Redis has started):", e)
+        
     
     # Calculates users in model and adds to the result
     if len(usernames_list) > 0: # Can't send 0 users to model
         # If process_requests not started yet, start the process_requests task in the background (only once!)
         if not process_requests_started:
-            asyncio.ensure_future(process_requests())
-            process_requests_started = True
+            try:
+                asyncio.ensure_future(process_requests())
+                process_requests_started = True
+            except Exception as e:
+                print("Error in process_requests(): ", e)
 
-        future = asyncio.get_event_loop().create_future()
-        # Add usernames_list to the requests_queue
-        requests_queue.append((usernames_list, future)) # future is the future object that will be updated with the result from the model
-        # Wait for the future to be updated with the result from the model
-        response = await future 
-        # Response is answer for all users request
-        # Need to: Update only the users that were in this request
-        for username in usernames_list:
-            if (response is not None and username in response):
-                result[username] = response[username]   
+        try: 
+            future = asyncio.get_event_loop().create_future()
+            # Add usernames_list to the requests_queue
+            requests_queue.append((usernames_list, future)) # future is the future object that will be updated with the result from the model
+            # Wait for the future to be updated with the result from the model
+            response = await future 
+            # Response is answer for all users request
+            # Need to: Update only the users that were in this request
+            for username in usernames_list:
+                if (response is not None and username in response):
+                    result[username] = response[username] 
+        except Exception as e:
+            print("Error in asyncio: ", e)
+             
 
     # Update redis storage with the **new** usernames and their results
     for username in usernames_list:
@@ -129,12 +144,15 @@ async def followers_bots(username: str, classification: bool, followersPrec: boo
         redis_user_key = f'{username}_followers'
         print("userkey:" ,redis_user_key)
         # If the result of username (followers) is saved and up to date- return its value
-        if r.get(redis_user_key) is not None:
-            print("in redis!")
-            userStorageValue = eval(r.get(redis_user_key))
-            expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
-            if expirationDate <= datetime.datetime.now(): # Redis value is still valid (has not expired yet)
-                bot_prec = userStorageValue["bot_precentage"]
+        try:
+            if r.get(redis_user_key) is not None:
+                print("in redis!")
+                userStorageValue = eval(r.get(redis_user_key))
+                expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
+                if expirationDate <= datetime.datetime.now(): # Redis value is still valid (has not expired yet)
+                    bot_prec = userStorageValue["bot_precentage"]
+        except (redis.exceptions.ConnectionError, redis.exceptions.ResponseError, KeyError) as e:
+            print("Error with Redis (Verify the Redis has started):", e)
 
         # Not in redis
         if (bot_prec == [None, None]):
@@ -152,7 +170,10 @@ async def followers_bots(username: str, classification: bool, followersPrec: boo
                 expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
                 userStorageValue = {'bot_precentage': bot_prec[1], 'expiration': expirationDate}
                 userStorageValue = str(userStorageValue) # Convert dict to string according to redis storage format
-                r.set(redis_user_key, userStorageValue)
+                try:
+                    r.set(redis_user_key, userStorageValue)
+                except (redis.exceptions.ConnectionError, redis.exceptions.ResponseError) as e:
+                    print("Error with Redis (Verify the Redis has started):", e)
 
                 # Update redis (classification of each follower)
                 for follower in result:
@@ -161,8 +182,13 @@ async def followers_bots(username: str, classification: bool, followersPrec: boo
     # ========================== Handle user's classification ========================== #
     classification_result = {username: None}
     if (classification):
-        if r.get(username) is not None:
-            userStorageValue = eval(r.get(username)) # Convert string to dict
+        try:
+            redis_result = r.get(username)
+        except (redis.exceptions.ConnectionError, redis.exceptions.ResponseError) as e:
+            print("Error with Redis (Verify the Redis has started):", e)
+            redis_result = None
+        if redis_result is not None:
+            userStorageValue = eval(redis_result) # Convert string to dict
             expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
             if expirationDate > datetime.datetime.now(): # Redis value is still valid (has not expired yet)
                 classification_result[username] = {} # Create new dict for the username
