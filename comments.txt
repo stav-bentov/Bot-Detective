@@ -1,3 +1,5 @@
+Comments for US during work about features and metadata:
+
 Twitter V1.1
 For metadata we need:
     Name by the article:            Meaning:
