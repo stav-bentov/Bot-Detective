@@ -53,7 +53,7 @@ For using the extension follow the next steps:
 2. Open Chrome Extensions on developer mode.
 3. Click on Load unpack and choose the cloned project.
 4. To run our extension using the local server make sure that the following comments are underlined:
-- In API_requests.py: 
+- In API_requests.py:
 Make this lines in a comment:
 ``` 
     app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
@@ -64,8 +64,7 @@ Make sure this line is not in comment:
 ``` 
   uvicorn.run(app, port=8000)
 ```
-- In searchAndCalcUsers.js:
-Make this lines in a comment:
+- In searchAndCalcUsers.js: Make this lines in a comment:
 ``` 
   const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
 ```
@@ -83,7 +82,7 @@ Make sure this line is not in comment:
   response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
 ```
 *note: For running our Google Chrome server- do the oopisite (regarding the comments)*
-5. Activate Resid in the server (local or our Google Cloud Server):
+<br/>5. Activate Resid in the server (local or our Google Cloud Server):
 ```
   sudo service redis-server start
   password: [enter password]
