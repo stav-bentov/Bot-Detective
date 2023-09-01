@@ -1,10 +1,16 @@
+/* DESCRIPTION:
+    A content script that is responsible for adding information about the bot percentage in a (maximum) of 100 random followers. 
+    It activates upon each entry to a profile page, triggered by a message from the urlChanged.js background script.*/
+
+/* ============================================================================= */
+/* ============================ Variable Defenition ============================ */
+/* ============================================================================= */
 const spanSelector = '#react-root > div > div > div.css-1dbjc4n.r-18u37iz.r-13qz1uu.r-417010 > main > div > div > div > div.css-1dbjc4n.r-14lw9ot.r-jxzhtn.r-1ljd8xs.r-13l2t4g.r-1phboty.r-16y2uox.r-1jgb5lz.r-11wrixw.r-61z16t.r-1ye8kvj.r-13qz1uu.r-184en5c > div > div:nth-child(3) > div > div > div > div > div.css-1dbjc4n.r-13awgt0.r-18u37iz.r-1w6e6rj';
 const attributeSelectorPrec = '[data-testid="UserName"]'
 const infoId = "_bots_prec_info";
 const savedWords = ["home", "explore", "notifications", "messages", , "i"];
 const validForthPath = ["likes", "media", "with_replies"];
 const NUM_FOLLOWERS_CHECKED = 100;
-
 let userInStorageBotPrec = {
     bot_precentage: MISSING,
     expiration: MISSING
@@ -12,25 +18,34 @@ let userInStorageBotPrec = {
 
 /* Checking local storage*/
 if (typeof(Storage) !== "undefined") {
-    console.log("Code for localStorage/sessionStorage.");
+    console.log("ClocalStorage/sessionStorage is good to go!");
 } else {
     console.log("Sorry! No Web Storage support..");
 }
 
-/* Check if a bot sign is exist, if its not belongs to current user- delete and init attributes
-    Return: true if sign exist and belongs to current user/ sign doesnt exist
-            false if sign exist but not belongs*/
+
+/* ============================================================================= */
+/* ================================= FUNCTIONS ================================= */
+/* ============================================================================= */
+
+/**
+ * Check if a bot sign is exist, if its not belongs to current user- delete and init attributes
+ * @param {string} username 
+ * @param {HTMLElement} targetElement the span that has '[data-testid="UserName"]' 
+ * @returns True if sign exist and belongs to current user/ sign doesnt exist
+            False if sign exist but not belongs*/
 function isSignBelongs(username, targetElement) {
-    /* Adding bot/human sign process include: 
+    /* REMEMBER: 
+        Adding bot/human sign process include: 
         (1) Adding status, id (=username_count) to span = @username
         (2) Adding bot/ human image with parameters: id (=username_count), SIGN_IMAGE="1"
-        */
+    */
     // Get image
     var spanImage = targetElement.querySelector('[SIGN_IMAGE="1"]');
     if (spanImage) {
         console.log(`${spanImage.id}`);
 
-        // Who the image is belongs to 
+        // Who the image is belongs to? 
         // Belongs to current user
         if (spanImage.id.startsWith(username)) {
             // Span (and info) belongs to current username
@@ -83,7 +98,6 @@ async function addInfo() {
     var isDisplayed = checkDisplayedInfo(username);
     if (isDisplayed != OK)
         changeFollowersPrecInfo = true;
-    console.log(`changeFollowersPrecInfo: ${changeFollowersPrecInfo}`);
     
     var targetElement = document.querySelector(attributeSelectorPrec);
     
@@ -183,10 +197,13 @@ async function addInfo() {
     console.log(`Done showBot`);
 }
 
-/* Checks span that includes followers prec information
-    Returns OK if the info is displayed and corresponds to current user
-            element if info is displayed for other user
-            else- null (info is not displayed) */
+/**
+ * Checks span that includes followers prec information for given username
+ * @param {string} username 
+ * @returns OK if the info is displayed and corresponds to current user element
+ *          The info Element- if info is displayed for other user
+            Else- null (info is not displayed)
+ */
 function checkDisplayedInfo(username) {
     /* Check if there is already shown info on this user*/
     var infoElement = document.getElementById(infoId);
@@ -210,6 +227,14 @@ function checkDisplayedInfo(username) {
     return null;
 }
 
+/**
+ * Adds bots in followers information (and proper popup)
+ * @param {int} botPrecentage            Number of bots in (max)100 selected followers
+ * @param {HTMLElement} targetElement       Html element to add information to
+ * @param {string} username 
+ * @param {HTMLElement} container           If the inforamtion was wlready displayed (for other users), it will contain the element (else- null)
+ * @returns 
+ */
 function addElement(botPrecentage, targetElement, username, container) {
     var numFollowersChecked = botPrecentage["bots"] + botPrecentage["humans"];
     // If the target node hasnt been found- end func (we are not in profile page)
@@ -304,10 +329,13 @@ function addElement(botPrecentage, targetElement, username, container) {
 }
 
 /**
- * Gets a url and check if we are in a profile page
+ * Check if we are in a profile page
+ * @param {url} url 
+ * @returns True if we are on profile page
+ *          else- False
  */
 function checkUrl(url){
-    /*  What is a url that I should add to it info? 
+    /*  What is a url that I should add to it info (profile page)? 
      https://twitter.com/username
      https://twitter.com/username/likes
      https://twitter.com/username/media
@@ -343,15 +371,19 @@ function checkUrl(url){
     return false;
 } 
 
-/* ============================================== Listeners SETUP ============================================== */
+
+/* ============================================================================= */
+/* ================================== "MAIN" =================================== */
+/* ============================================================================= */
+
+/* Listeners SETUP */
 console.log("In content-script");
 
 /* Make sure content script can recieve messages*/
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
-    // Listen for messages sent from background.js
+    // Listen for messages sent from urlChanged.js
     if (request.message === 'urlMessage') {
       await addInfo();
-      console.log("enable script");
     }
 });
 console.log("Content script listens to messages");
@@ -359,13 +391,11 @@ console.log("Content script listens to messages");
 // Let the background script know that the content script is ready
 chrome.runtime.sendMessage({ message: 'contentScriptIsReady' });
 console.log("Content script sent READY message to background");
-/* ============================================ DONE Listeners SETUP ============================================= */
+/* DONE Listeners SETUP */
 
-
-
+// Handle current page
 window.onload = async function() {
     if (checkUrl(window.location.href)) {
-        console.log("in first attemp");
         await addInfo();
     }
 };

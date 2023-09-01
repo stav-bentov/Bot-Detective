@@ -99,36 +99,44 @@ def get_bot_percentage_in_followers(model, username): # now taking all followers
     bot_percentage_of_followers = (bot_prec[1] / (bot_prec[0] + bot_prec[1])) * 100
     #print("res: ", res) # TODO: remove (DEBUG ONLY)
     return bot_percentage_of_followers
-"""
+
+def get_knesset_members_bots_percentage(model, knesset_members):
+    """
         Input: model- The model that classify our users
                knesset_members- The usernames of the knesset members whose followers we want to examine
         Returns: A dictonary with keys: kneset members usernames and values: percentage of bots among their followers
-"""
-def get_knesset_members_bots_percentage(model, knesset_members):
+    """
     knesset_members_bots_percentage = {}
     for knesset_member in enumerate(knesset_members):
         knesset_members_bots_percentage[knesset_member] = get_bot_percentage_in_followers(model, knesset_member)
     return knesset_members_bots_percentage
 
-######### Builds the file "all_knesset_members_bots_percentage.txt" which contains the percentage of bots among the followers of each knesset member #########
 def create_results_file_for_each_knesset_member(model, knesset_members):
+    """
+        Input: model- The model that classify our users
+               knesset_members- The usernames of the knesset members whose followers we want to examine
+        Builds the file "all_knesset_members_bots_percentage.txt" which contains the percentage of bots among the followers of each knesset member
+    """
     for knesset_member in knesset_members:
         with open(f"{knesset_member}_bots_percentage.txt", "w") as file:
             file.write(str(get_knesset_members_bots_percentage(model, [knesset_member])))
             
 def create_result_file_for_all_knesset_members(knesset_members):
-    # unite the results from all results files into one file (the files are in "knesset" folder)
+    """
+        Input: knesset_members- The usernames of the knesset members whose followers we want to examine
+        Unite the results from all results files into one file (the files are in "knesset" folder)
+    """
     with open("all_knesset_members_bots_percentage.txt", "w") as file:
         for knesset_member in knesset_members:
             with open(f"knesset/{knesset_member}_bots_percentage.txt", "r") as knesset_member_file:
                 file.write(knesset_member_file.read())
                 file.write("\n")
 
-############ ran one time just for build DB of knesset members bots percentage ############
-
-# return a dictionary with keys: kneset members usernames and values: percentage of bots among their followers
-# knesset_member: bot_percentage_of_his_followers
 def read_knesset_bot_percentage_file_to_dictionary():
+    """
+        Returns a dictionary with keys: kneset members usernames and values: percentage of bots among their followers
+        {knesset_member: bot_percentage_of_his_followers}
+    """
     results = {}
     with open("knesset/all_knesset_members_bots_percentage.txt", "r") as file:
         for line in file:
@@ -137,8 +145,10 @@ def read_knesset_bot_percentage_file_to_dictionary():
             results.update(data_dict)
     return results
 
-# return a dictionary in format -> minister: bot_percentage_of_his_followers
 def read_ministers_bot_percentage_file_to_dictionary():
+    """
+        Returns a dictionary in format -> minister: bot_percentage_of_his_followers
+    """
     results = {}
     with open("knesset/ministers_bot_percentage.txt", "r") as file:
         for line in file:
@@ -148,8 +158,10 @@ def read_ministers_bot_percentage_file_to_dictionary():
 
     return results
 
-# return a dictionary-> party: bot_percentage_of_its_members (average)
 def get_parties_bot_percentages(knesset_members_bot_percentages):
+    """
+        Returns a dictionary in format -> party: bot_percentage_of_its_members (average)
+    """
     parties_bot_percentages = {} # party: bot_percentage_of_its_members (average)
     for party in knesset_members_by_party:
         parties_bot_percentages[party] = 0

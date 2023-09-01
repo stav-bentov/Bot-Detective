@@ -1,9 +1,13 @@
+/* DESCRIPTION:
+    background script is responsible for sending a message to showBotPrec every time the URL changes (possibly when navigating to a profile page). 
+    It becomes active after receiving a message from showBotPrec.js.*/
+
 var isContentScriptReady = false;
 const savedWords = ["home", "explore", "notifications", "messages", , "i"];
 const validForthPath = ["likes", "media", "with_replies"];
 
 /**
- * Sends url change to the content script
+ * Sends url change to the content script ()
  * @param {int} tabId               The ID of the updated tab.
  * @param {object} changeInfo       Properties of the tab that changed.
  * @param {tab} tab                 The new state of the tab.

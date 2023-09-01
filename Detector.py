@@ -55,6 +55,14 @@ user_derived_features = {"profile_use_background_image": [1, "profile_use_backgr
 # ========================================== Functions ========================================== #
 # =============================================================================================== #
 
+def load_model():
+    """
+        Loads the model from detector_model.pkl
+    """
+    with open('detector_model.pkl', 'rb') as f: # rb = read binary
+        model = pickle.load(f) # Load the model from the file
+    return model
+
 def likelihood(str: str) -> float:
     """
         Input: string (screen_name/ name)
@@ -78,14 +86,6 @@ def likelihood(str: str) -> float:
 
     # geometric-mean defenition
     return math.pow(biagrams_mul , (1/num_dif_bigrams))
-
-def load_model():
-    """
-        Loads the model from detector_model.pkl
-    """
-    with open('detector_model.pkl', 'rb') as f: # rb = read binary
-        model = pickle.load(f) # Load the model from the file
-    return model
 
 def model_predict_if_user_is_bot(model, user_metadata):
     """
@@ -142,62 +142,6 @@ def get_features(response_data):
             user_metadata[feature] = calc_function(x1, x2)
     return user_metadata
 
-def get_important_features(df_user_data, classification):
-    """
-        Given a usermetadata and it's classification, prints the importance of each feature and affect amount on the classification
-    """
-    # Get  most important features
-    feature_importances = model.feature_importances_
-    print(feature_importances)
-    # Get indices of the top features contributing to the prediction
-    top_feature_indices = np.argsort(feature_importances)[::-1]
-    print(top_feature_indices)
-    df_user_data_values= df_user_data.values.flatten().tolist()
-    df_user_data_keys= df_user_data.columns.tolist()
-
-    # Print the most important features and their values for the predicted class
-    print(f"Predicted Class: {classification}")
-    print("Top Features and Their Values:")
-    for feature_idx in top_feature_indices:
-        feature_value = df_user_data_values[feature_idx]
-        print(f"{df_user_data_keys[feature_idx]} {feature_idx+1}: {feature_value:.4f} (Importance: {feature_importances[feature_idx]:.4f})")
-
-# !Not in use!
-def detect_users(users):
-    """
-        Input: users- a list of usernames
-        Returns: a dictonary with keys: usernames, values: user's classification (bot = 1, human = 0)
-    """
-    user_fields_param = ["name", "created_at", "description", "verified", "profile_image_url", "public_metrics", "id"]
-    
-    # client.get_users can get up to 100 users in a single request.
-    req_max_size = 100
-    res = {}
-    
-    # client.get_users can get up to 100 users, so we will separate our calls to up to 100
-    for i in range(0, len(users), req_max_size):
-        users_batch = users[i:i + req_max_size]
-
-        # Creates a request with get_user - get response object which contains user object by username
-        # RECALL: client.get_users is synchronous by default
-        users_response = client.get_users(usernames = users_batch, user_fields = user_fields_param)
-        time.sleep(0.5)
-        for response in users_response.data:
-            meta = get_features(response.data)
-            res[response["username"]] = model_predict_if_user_is_bot(load_model(), meta)
-    
-    return res
-
-# !Not in use!
-def detect_user(username):
-    meta = get_features(username)
-    return model_predict_if_user_is_bot(load_model(), meta)
-
-# !Not in use!
-def detect_user_model(model, username):
-    meta = get_features(username)
-    return model_predict_if_user_is_bot(model, meta)
-
 def detect_users_model(model, users, get_percentage = False):
     """
         Input: model- the model that classify our users
@@ -206,7 +150,6 @@ def detect_users_model(model, users, get_percentage = False):
         Returns: a dictonary with keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
                 [if get_percentage == True then returns a list: [number of bots, number of humans]]
     """
-
     # users lookup can get up to 100 users in a single request.
     req_max_size = 100
     res = {}
@@ -278,9 +221,6 @@ def get_bots_in_followers(model, username):
 
     #v1
     url = f"https://api.twitter.com/1.1/followers/ids.json?{screen_name_req}"
-    #v2 TODO: Need to check this!
-    # ! Maximum users per response: 1000 user objects per page
-    #url = f"https://api.twitter.com//2/users/:id/followers?{screen_name_req}"
 
     response = send_Twitter_API_request(url)
 
@@ -323,7 +263,8 @@ def get_bots_in_followers(model, username):
         bot_prec[is_bot["classification"]] += 1
     #print(res)
     return res, bot_prec
-    
+ 
+# !Not in use!   
 def get_bots_in_likes(model, tweet_id):
     """
         Input: model- The model that classify our users
@@ -345,12 +286,61 @@ def get_bots_in_likes(model, tweet_id):
     # Classify users
     return (detect_users_model(model, liking_users, True))
 
-#model = load_model()
-#result = get_bots_in_likes(model, "1686067421872865283")
-#print(result)
-#print(detect_users_model(model, ["igalmosko", "YunaLeibzon", "MatanHodorov"]))
+# !Not in use!
+def detect_users(users):
+    """
+        Input: users- a list of usernames
+        Returns: a dictonary with keys: usernames, values: user's classification (bot = 1, human = 0)
+    """
+    user_fields_param = ["name", "created_at", "description", "verified", "profile_image_url", "public_metrics", "id"]
+    
+    # client.get_users can get up to 100 users in a single request.
+    req_max_size = 100
+    res = {}
+    
+    # client.get_users can get up to 100 users, so we will separate our calls to up to 100
+    for i in range(0, len(users), req_max_size):
+        users_batch = users[i:i + req_max_size]
 
-#result = get_bots_in_likes(model, "barak_ehud")
-#print(result)
-# meta = get_metadata("YairNetanyahu")
-# print(model_predict_if_user_is_bot(load_model(), meta))"""
+        # Creates a request with get_user - get response object which contains user object by username
+        # RECALL: client.get_users is synchronous by default
+        users_response = client.get_users(usernames = users_batch, user_fields = user_fields_param)
+        time.sleep(0.5)
+        for response in users_response.data:
+            meta = get_features(response.data)
+            res[response["username"]] = model_predict_if_user_is_bot(load_model(), meta)
+    
+    return res
+
+# !Not in use!
+def detect_user(username):
+    meta = get_features(username)
+    return model_predict_if_user_is_bot(load_model(), meta)
+
+# !Not in use!
+def detect_user_model(model, username):
+    meta = get_features(username)
+    return model_predict_if_user_is_bot(model, meta)
+
+
+# Explore model
+# Calculations for us
+def get_important_features(model, df_user_data, classification):
+    """
+        Given a usermetadata and it's classification, prints the importance of each feature and affect amount on the classification
+    """
+    # Get  most important features
+    feature_importances = model.feature_importances_
+    print(feature_importances)
+    # Get indices of the top features contributing to the prediction
+    top_feature_indices = np.argsort(feature_importances)[::-1]
+    print(top_feature_indices)
+    df_user_data_values= df_user_data.values.flatten().tolist()
+    df_user_data_keys= df_user_data.columns.tolist()
+
+    # Print the most important features and their values for the predicted class
+    print(f"Predicted Class: {classification}")
+    print("Top Features and Their Values:")
+    for feature_idx in top_feature_indices:
+        feature_value = df_user_data_values[feature_idx]
+        print(f"{df_user_data_keys[feature_idx]} {feature_idx+1}: {feature_value:.4f} (Importance: {feature_importances[feature_idx]:.4f})")

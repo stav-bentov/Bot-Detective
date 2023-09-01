@@ -1,41 +1,49 @@
-// Usernames from tweets and retweets
+/* DESCRIPTION:
+    A content script responsible for adding bot or human signs based on the user's classification by the model.*/
+    
+/* ============================================================================= */
+/* ============================ Variable Defenition ============================ */
+/* ============================================================================= */
 const attributeSelectorClassification1 = '[data-testid="User-Name"]';
-// Usernames from "follow suggestion"
+// Usernames from follow/likes/search ...
 const attributeSelectorClassification2 = '[data-testid="UserCell"]';
 // Usernames from profile page
-const attributeSelectorClassification3 = '[data-testid="UserName"]';
-        
+const attributeSelectorClassification3 = '[data-testid="UserName"]';    
+
 // Every mutation will be filled and then erased
 var mutationDict = {};
-// In every X seconds we will copy mutationDict to usersOnRequestDict and run makeRequest on users, the results will be there
+// In every interval/1000 seconds we will copy mutationDict to usersOnRequestDict and run makeRequest on the users, the results will be saved there
 var usersOnRequestDict = {};
+// Help us identify elements we need to update with results
 var countId = 0;
-
-var inProcessMutation = false;
-var inIntervals = false;
-var interval = 3000;
 // Const for bot/human/ not calculated yet-unknown 
 const bot = 1;
 const human = 0;
 
+var inProcessMutation = false;
+var inIntervals = false;
+var interval = 3000;
 
 // Insert every mutation to queue and ensure 
 let mutationQueue = [];
 
+/* ============================================================================= */
+/* ================================== "MAIN" =================================== */
+/* ============================================================================= */
+
 // Clear local storage
 // localStorage.clear(); 
 
-
-/* ============================ "MAIN" ============================ */
-// Create a new MutationObserver instance
+// Create a new MutationObserver instance for tracking new elements
 const observer = new MutationObserver(handleMutation);
 setObserver();
 setInterval(async () => { await intervalFunc();}, interval);
-/* ============================ END "MAIN" ============================ */
 
 
+/* ============================================================================= */
+/* ================================= FUNCTIONS ================================= */
+/* ============================================================================= */
 
-/* ============================ FUNCTIONS ============================ */
 /**
  * Sets the observer which is seeking for document changes and get new usernames
  */
@@ -48,7 +56,7 @@ function setObserver(){
 /**
  * Runs every @interval seconds.
  * This function calls setRequestDict() to get the users that we collected until this time,
- * and then calls makeRequests() to classify each user with API request to our server (that runs the model).
+ * then calls makeRequests() to classify each user with API request to our server (that runs the model).
  * Eventually set a bot/ human sign near every user.
  */
 async function intervalFunc(){
@@ -99,20 +107,17 @@ function setSigns(){
     console.log(JSON.stringify(usersOnRequestDict, null, 2));
     var result;
     for (var user in usersOnRequestDict){
+        // Check if result in local storage (if the server returned the result it should be there)
         result = checkAvailabilityAndExpiration(user, USER_BOT_TYPE);
         if (result != MISSING) {
-            console.log(JSON.stringify(usersOnRequestDict, null, 2));
             var accuracy = JSON.parse(localStorage.getItem(user)).accuracy;
-            console.log(JSON.stringify(usersOnRequestDict, null, 2));
-            console.log(usersOnRequestDict[user]);
+            // Add propper sign near required elements
             usersOnRequestDict[user].forEach(elementCountId=> {
                 addSign(user + elementCountId, result, accuracy);
               });
         }
     }
 }
-
-
 
 /**
  * Sends API request for every user in usersOnRequestDict(keys) and classify the users.
@@ -122,22 +127,14 @@ async function makeRequests() {
         var  expirationDate = new Date();
         expirationDate.setDate(expirationDate.getDate() + 10);
         
-        // API request for detect human/bot (runs the model on username)
-
+        // Make API requests for classify human/bot (runs the model on username or get from Redis)
         // LOCAL: FastAPI
         const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
         // VM: FastAPI
         //const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
 
-        // NOT IN USE: //
-        // LOCAL: Flask
-        //const response = await fetch(`http://127.0.0.1:5000/isBot/${user}`);
-        // VM: Flask
-        // const response = await fetch(`https://34.165.1.66:3003/isBot/${user}`);
-        
-
         const data = await response.json(); // data is dict of dicts: {username:{classification:class, accuracy:acc}}
-        console.log(`data recived: ${data}`);
+        console.log(`data is recived from request: ${data}`);
         
         // Read the result from the response and set the classification & accuracy in local storage
         for (var user in data){
@@ -153,8 +150,10 @@ async function makeRequests() {
 }
 
 /**
- * Handles mutations: Insert mutation to queue- If no other mutation is being processed
- * sends it to process, else- end func (this mutation will be processed after the current)
+ * Handles mutations: Insert mutation to queue. 
+ * If no other mutation is being processed sends it to process, 
+ * else- end function (this mutation will be processed after the current)
+ * @param {Array} mutations 
  */
 function handleMutation(mutations) {
     mutationQueue.push(...mutations);
@@ -163,6 +162,12 @@ function handleMutation(mutations) {
     processMutation();
 }
 
+/**
+ * Updates values: id and STATUS attribute. 
+ * Check if there is an updated result in local storage (if yes- add sign).
+ * If there is no updated result in Local storage- update mutationDict (so the classification will be calculated).
+ * @param {HTMLElement} usernameSpan    span that has one of the next attrivutes: data-testid="User-Name", data-testid="UserCell", data-testid="UserName".
+ */
 function processUserSpan(usernameSpan)
 {
     // Del @
@@ -208,6 +213,7 @@ function processMutation() {
         return;
     }
 
+    // Handle mutations in queue
     inProcessMutation = true;
     var mutation = mutationQueue.shift();
     if (mutation.addedNodes.length) {
@@ -219,19 +225,29 @@ function processMutation() {
                 // Tweet/ reTweet
                 var userNamesDivsElements = addedNode.querySelectorAll(attributeSelectorClassification1);
                 userNamesDivsElements.forEach(element => {
-                    // Get username
-                    var usernameSpan = getUsernameSpan(element);
+                    // From tweet
+                    var usernameSpan = element.querySelector('div.css-1dbjc4n.r-18u37iz.r-1wbh5a2.r-13hce6t > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs > a > div > span');
                     // Found required element
                     if(usernameSpan) {
                         processUserSpan(usernameSpan);
                     }
                     else
-                        console.log(`no username in datatestid: ${element.innerHTML}`);
+                    {
+                        // From retweet
+                        usernameSpan =  element.querySelector("div > div.css-1dbjc4n.r-18u37iz.r-1wbh5a2.r-13hce6t > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs > div > div > span");
+                        if(usernameSpan) {
+                            console.log(`found in Retweet section`);
+                            processUserSpan(usernameSpan);
+                        }
+                        else
+                            console.log(`no username in datatestid: ${element.innerHTML}`);
+                    }
                 });
 
                 // Follows/ Following/ Likes/ Reposted By/Search
                 userNamesDivsElements = addedNode.querySelectorAll(attributeSelectorClassification2);
                 userNamesDivsElements.forEach(element => {
+                    // From Follows/ Following/ Likes/ Reposted By
                     var usernameSpan = element.querySelector("div > div.css-1dbjc4n.r-1iusvr4.r-16y2uox > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wtj0ep > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > a > div > div > span");
                     // Found required element
                     if(usernameSpan) {
@@ -239,9 +255,8 @@ function processMutation() {
                     }
                     else
                     {
-                        // console.log(`no username in datatestid: ${element.innerHTML}`);
                         // Check if its a Search section
-                        var usernameSpan = element.querySelector("div > div > div.css-1dbjc4n.r-1iusvr4.r-16y2uox.r-1777fci > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span")
+                        usernameSpan = element.querySelector("div > div > div.css-1dbjc4n.r-1iusvr4.r-16y2uox.r-1777fci > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span")
                         if(usernameSpan) {
                             console.log(`found in Search section`);
                             processUserSpan(usernameSpan);
@@ -270,16 +285,4 @@ function processMutation() {
 
     // Take care of next mutation in queue (if exist)
     processMutation();
-}
-
-function getUsernameSpan(element) {
-    // From tweet
-    var userNameSpan = element.querySelector('div.css-1dbjc4n.r-18u37iz.r-1wbh5a2.r-13hce6t > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs > a > div > span');
-    if (userNameSpan)
-        return userNameSpan;
-    // From reTweet
-    userNameSpan = element.querySelector("div > div.css-1dbjc4n.r-18u37iz.r-1wbh5a2.r-13hce6t > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs > div > div > span");
-    if (userNameSpan)
-        return userNameSpan;
-    return null;
 }

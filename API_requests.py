@@ -10,18 +10,21 @@ import redis
 import asyncio
 from collections import deque 
 
-####### INIT REDIS #######
+# ================================= INIT REDIS =================================
 # Creating redis storage to store the results of the model from all users ever calculated
-# values are stored in the following format:
-# {username: {'classification': result, 'accuracy': accuracy_of_prediction, 'expiration': expirationDate}}
+# Values are stored in the following format: 
+# [classification] {username: {'classification': result, 'accuracy': accuracy_of_prediction, 'expiration': expirationDate}}
+# [bot precentage] {username_followers: {'bot_precentage': result, 'expiration': expirationDate}}
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+# Clear redis
 # r.flushall() # delete all keys in redis storage
 # print("Redis Storage= ",r.keys()) # print all keys in redis storage
 
-####### INIT MODEL #######
+# ================================= INIT MODEL =================================
 model = load_model() # load the model once
 
-####### INIT requests QUEUE #######
+# ============================ INIT requests QUEUE =============================
 # Format: (usernames_list, future) per request
 # Notice that client need to wait for response before sending another request
 requests_queue = deque() # Global for all clients
@@ -31,6 +34,7 @@ PERIODIC_REQUESTS_CALCULATION = 2 # Seconds
 process_requests_started = False
 
 
+# ================================= FUNCTIONS =================================
 def get_all_usernames_on_queue():
     """
         Returns: tuple:(all_users= list of all usernames on queue from all requests, 
@@ -59,6 +63,9 @@ async def process_requests():
         await asyncio.sleep(PERIODIC_REQUESTS_CALCULATION)  
 
 def update_redis(username, classification, accuracy, expiration):
+    """
+        Gets details about element to add to resid: username (=key), classification, accuracy, expiration =(values)
+    """
     userStorageValue = {'classification': classification, 'accuracy': accuracy ,'expiration': expiration}
     userStorageValue = str(userStorageValue) # Convert dict to string according to redis storage format
     try:
@@ -74,10 +81,14 @@ def read_root():
 
 @app.get("/isBot/{usernames_str}")
 async def is_bot(usernames_str: str):
+    """
+        Get users classification requests.
+        Gets a string of users: "user_1, user_2, ..."
+        Check if the results are in Redis, if not add to queue. Every interval time call the model on queue, update Redis and returns the results.
+    """
     global process_requests_started
     result = {} # Keys: usernames, values: {classification:user's classification (bot = 1, human = 0), accuracy:accuracy of prediction]
     usernames_list = usernames_str.split(",")
-    #print("len before remove (usernames_list) = {0}".format(len(usernames_list)))
 
     # Update usernames_list to be only the usernames that are not in the redis storage
     for username in usernames_list:
@@ -135,6 +146,11 @@ async def is_bot(usernames_str: str):
 
 @app.get("/followersBots/")
 async def followers_bots(username: str, classification: bool, followersPrec: bool):
+    """
+        Get user classification and bot precentage requests.
+        Gets a string of username, and if classification/ bot precentage is requested
+        Check if the results are in Redis, if not add to queue. Every interval time call the model on queue, update Redis and returns the results.
+    """
     expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
 
     # ========================== Handle followers prec ========================== #

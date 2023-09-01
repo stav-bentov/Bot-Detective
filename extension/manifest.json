@@ -5,11 +5,13 @@
     "description":"Combat presence of Twitter bot accounts! In compliance with privacy standards ,we collect only publicly accessible data and don't retrieve any private information, such as passwords",
     "version": "1.0",
     "permissions": [
-        "http://127.0.0.1/*",
-        "https://34.165.68.249/*",
         "activeTab",
         "tabs",
         "webNavigation"
+    ],
+    "host_permissions": [
+        "http://127.0.0.1/*",
+        "https://34.165.68.249/*"
     ],
     "background": {
         "service_worker": "urlChanged.js"

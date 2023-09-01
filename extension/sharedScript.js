@@ -1,3 +1,9 @@
+/* DESCRIPTION:
+    A content script that contains functions and variables shared by both searchAndCalcUsers and showBotPrec content scripts, as it is utilized by both of them.*/
+
+/* ============================================================================= */
+/* ============================ Variable Defenition ============================ */
+/* ============================================================================= */
 const MISSING = -2;
 const UPDATED = 1;
 const NOT_UPDATED = 0;
@@ -6,6 +12,17 @@ const OK = 1;
 const BOT_PREC_TYPE = 1;
 const USER_BOT_TYPE = 2;
 const unknown = -1;
+
+/* An object that will be used for each user's value in the local storage- need to update classification*/
+let userInStorageClassification = {
+    classification: unknown,
+    accuracy: 0,
+    expiration: MISSING
+};
+
+// ========================================================
+// ========================= Text =========================
+// ========================================================
 const botPopupTextPart1 = `Caution: Our model suggests this account may have automated behavior with `;
 const botPopupTextPart2 = `% accuracy.<br/>Avoid sharing personal information for your own security. Stay safe online.<br/><em>For reliable information about bots, click the sign.</em>`;
 const humanPopupTextPart1 = `Note: Our model confidently identifies this account as human, with `;
@@ -40,18 +57,24 @@ const informativePopupContent = `
 <div style="text-align: right;">&mdash; <cite><a href="https://nypost.com/2023/08/24/scientists-found-1140-ai-bots-on-x-creating-fake-profiles/" style="color: #000; text-decoration: none;">NEW YORK POST</a></cite></div>
 `;
 
-/* An object that will be used for each user's value in the local storage- need to update classification*/
-let userInStorageClassification = {
-    classification: unknown,
-    accuracy: 0,
-    expiration: MISSING
-};
-
+/* ============================================================================= */
+/* ================================== "MAIN" =================================== */
+/* ============================================================================= */
 const informativePopup = createInformationPopup();
 
+
+/* ============================================================================= */
+/* ================================= FUNCTIONS ================================= */
+/* ============================================================================= */
+
+/**
+ * Creates the informative popup and returns it
+ */
 function createInformationPopup() {
     const InformativePopup = document.createElement("div");
     InformativePopup.id = informativePopupId;
+
+    // Hidden by default
     InformativePopup.style.visibility = "hidden";
 
     // Disappear on click
@@ -61,6 +84,7 @@ function createInformationPopup() {
             InformativePopup.style.visibility = "hidden";
     });
 
+    // Design...
     InformativePopup.style.position = "fixed";
     InformativePopup.style.top = "0";
     InformativePopup.style.left = "0";
@@ -95,10 +119,11 @@ function createInformationPopup() {
 }
 
 /**
- * Check if user is saved in local storage and the required data is up to date.
- * Return: classification/ bot prec (if exist and update) [classification: 0 - human, 1- bot | bot prec: 0-100]
+ * Check if user is saved in local storage and if the required data is up to date.
+ * @param {string} localStorageUserKey          Key to search in local storage
+ * @param {int} searchType                   Can be bot precentage(BOT_PREC_TYPE) or classification result(USER_BOT_TYPE)
+ * @returns classification/ bot prec (if exist and updated) [classification: 0 - human, 1- bot | bot prec: 0-100]
  *         else- MISSING
- * @param {String} localStorageUserKey 
  */
 function checkAvailabilityAndExpiration(localStorageUserKey, searchType) {
     console.log(`checkAvailabilityAndExpiration for ${localStorageUserKey}`);
@@ -108,11 +133,6 @@ function checkAvailabilityAndExpiration(localStorageUserKey, searchType) {
     // User classification(/Bot precentages of user) is done and saved in local storage
     if (userStorageValue != null) {
         userDict = JSON.parse(userStorageValue);
-        console.log(`localStorageUserKey: ${localStorageUserKey}`);
-        console.log(`userDict.expiration: ${userDict.expiration}`);
-        console.log(`userDict.bot_precentage: ${userDict.bot_precentage}`);
-        console.log(`userDict.classification: ${userDict.classification}`);
-        console.log(`searchType: ${searchType}`);
         if (userDict.expiration == MISSING || currentDate > userDict.expiration) {
             userDict.expiration = MISSING;
             return MISSING;
@@ -130,7 +150,10 @@ function checkAvailabilityAndExpiration(localStorageUserKey, searchType) {
 }
 
 /**
- * Creates bot_image element
+ * Creates sign image element with popup according to clasisfication
+ * @param {int} accuracy     classification accuracy
+ * @param {int} isBot        classification
+ * @returns the container of created image element
  */
 function createBotHumanImage(accuracy, isBot) {
     var container = document.createElement("span");
@@ -220,19 +243,19 @@ function createBotHumanImage(accuracy, isBot) {
 
 /**
  * Adds bot sign near username.
- * @param {string} elementId - the id of the element we want to add bot sign near.
+ * @param {string} elementId        id of the element we want to add bot/human sign near
+ * @param {int} isBot            classification (1= bot, 0-human)
+ * @param {int} accuracy 
  */
-// Sign of bot, will be added to each suspected bot
-// function that its input is string username. and it find the element with id = username and puts the imgElement near it
 function addSign(elementId, isBot, accuracy) {  
     console.log(`In add sign for ${elementId}`);
     var usernameElement = document.getElementById(elementId);
     if (usernameElement) { 
-        // ASSUMPTION: It has to have STATUS attr but check to prevent error
+        // ASSUMPTION: It has to have STATUS attribute
         if (usernameElement.hasAttribute(STATUS) && usernameElement.getAttribute(STATUS) == NOT_UPDATED) {
             var imgElement = createBotHumanImage(accuracy, isBot);
 
-            // TODO: Added this for the situation where we move from profile page to another and the image doesnt deleted!
+            // Added this for the situation where we move from profile page to another and the image doesnt deleted!
             imgElement.id = `${elementId}_img`;
             imgElement.setAttribute("SIGN_IMAGE", 1);
             

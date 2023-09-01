@@ -11,7 +11,6 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import seaborn as sns
-#import shap
 
 def grid_search_nb(X, Y):
     """
@@ -146,8 +145,8 @@ def check_features():
 
 def plot_feature_importance():
     """
-    Generate the model according to the collected dataset in 'Datasets/all_df.csv'
-    and returns it
+        Generate the model according to the collected dataset in 'Datasets/all_df.csv'
+        and returns it
     """
     # Read the data
     df = pd.read_csv('Datasets/all_df.csv')
@@ -188,7 +187,7 @@ def plot_feature_importance():
 
 def plot_Confusion_Matrix_Heatmap():
     """
-    Generate a confusion matrix heatmap using 5-fold cross-validation with the dataset in 'Datasets/all_df.csv'
+        Generate a confusion matrix heatmap using 5-fold cross-validation with the dataset in 'Datasets/all_df.csv'
     """
     # Read the data
     df = pd.read_csv('Datasets/all_df.csv')
@@ -214,27 +213,6 @@ def plot_Confusion_Matrix_Heatmap():
     plt.xlabel("Predicted Labels")
     plt.ylabel("True Labels")
     plt.show()
-    
-"""def plot_shap():
-    # Load your dataset
-    df = pd.read_csv('Datasets/all_df.csv')
-    X = df.drop('target', axis=1)
-    Y = df['target']
-
-    # Train the model
-    model = RandomForestClassifier(n_estimators=200, max_depth=5, random_state=1)
-    model.fit(X, Y)
-
-    # Create a SHAP explainer
-    explainer = shap.TreeExplainer(model)
-    sv = explainer(X)
-    exp = shap.Explanation(sv.values[:,:,1], sv.base_values[:,1], data=X.values, feature_names=X.columns)
-    idx = 0
-    # print the explanation
-    print(exp) 
-    # plot the explanation
-    shap.waterfall_plot(exp[idx])"""
-
 
 #check_features()
 #plot_feature_importance()

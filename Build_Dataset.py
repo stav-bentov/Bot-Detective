@@ -5,7 +5,7 @@ from nltk.util import bigrams
 import math
 from datetime import datetime
 
-# setting python encoder to utf-8 to avoid encoding errors
+# Setting python encoder to utf-8 to avoid encoding errors
 sys.stdin.reconfigure(encoding='utf-8')
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -168,7 +168,6 @@ def get_user_age(probe_time, created_at):
                  the probe time (when the query happens) and the 
                  creation (created_at field) time of the user.
     """
-    # TODO: del later- info about datetime: https://www.w3resource.com/python/python-date-and-time.php
     hour_difference =  (probe_time - created_at).total_seconds() / 3600 
     return hour_difference
 
@@ -201,8 +200,7 @@ user_derived_features = {"tweet_freq": [2, "statuses_count", "user_age", calcula
                          "description_length": [1, "description", calculations["length"]],
                          "screen_name_likelihood": [1, "screen_name", calculations["likelihood"]]}
 
-# Notice it doesn't include -varol- because it is only labeling Bot/Not Bot
-# and doesn't include -cresci17-
+# Notice it doesn't include -varol- because it is only labeling Bot/Not Bot and doesn't include cresci17 (which is next, seperate to csv)
 # Format is: (input_fileName, target_fileName)
 input_fileNames = [("./Datasets/botometer-feedback-2019/botometer-feedback-2019_tweets.json", "./Datasets/botometer-feedback-2019/botometer-feedback-2019.tsv"),
                    ("./Datasets/celebrity-2019/celebrity-2019_tweets.json", "Datasets\celebrity-2019\celebrity-2019.tsv"),
