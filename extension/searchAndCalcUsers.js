@@ -4,16 +4,6 @@ const attributeSelectorClassification1 = '[data-testid="User-Name"]';
 const attributeSelectorClassification2 = '[data-testid="UserCell"]';
 // Usernames from profile page
 const attributeSelectorClassification3 = '[data-testid="UserName"]';
-
-/*const popupText = `This user account is suspected to be a bot. <br>
-                   Be aware that the account's activities may not be performed by a human user. <br>
-                   Please refrain from sharing personal or sensitive information`;*/
-const botPopupTextPart1 = `Caution: Our model suggests this account may have<br>
-                            automated behavior with `;
-const botPopupTextPart2 = `% accuracy.<br>Avoid sharing personal info  for your security.<br>Stay safe online.`;
-
-const humanPopupTextPart1 = `Note: Our model confidently identifies this account as human, with `;
-const humanPopupTextPart2 = `%<br>accuracy. Feel secure interacting, but remember to be careful<br>and minimize information sharing.`;
         
 // Every mutation will be filled and then erased
 var mutationDict = {};
@@ -239,7 +229,7 @@ function processMutation() {
                         console.log(`no username in datatestid: ${element.innerHTML}`);
                 });
 
-                // Follows
+                // Follows/ Following/ Likes/ Reposted By/Search
                 userNamesDivsElements = addedNode.querySelectorAll(attributeSelectorClassification2);
                 userNamesDivsElements.forEach(element => {
                     var usernameSpan = element.querySelector("div > div.css-1dbjc4n.r-1iusvr4.r-16y2uox > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wtj0ep > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > a > div > div > span");
@@ -248,15 +238,27 @@ function processMutation() {
                         processUserSpan(usernameSpan);
                     }
                     else
-                        console.log(`no username in datatestid: ${element.innerHTML}`);
+                    {
+                        // console.log(`no username in datatestid: ${element.innerHTML}`);
+                        // Check if its a Search section
+                        var usernameSpan = element.querySelector("div > div > div.css-1dbjc4n.r-1iusvr4.r-16y2uox.r-1777fci > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span")
+                        if(usernameSpan) {
+                            console.log(`found in Search section`);
+                            processUserSpan(usernameSpan);
+                        }
+                        else
+                            console.log(`no username in datatestid: ${element.innerHTML}`);
+                    }
                 });
 
                 // Profile
                 userNamesDivsElements = addedNode.querySelectorAll(attributeSelectorClassification3);
                 userNamesDivsElements.forEach(element => {
+                    console.log(`Detect mutation in Profile`);
                     var usernameSpan = element.querySelector("div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span");
                     // Found required element
                     if(usernameSpan) {
+                        console.log(`In profile option for: ${usernameSpan.innerHTML}`);
                         processUserSpan(usernameSpan);
                     }
                     else
@@ -281,15 +283,3 @@ function getUsernameSpan(element) {
         return userNameSpan;
     return null;
 }
-
-
-/*if (mutation.type === 'childList') {
-        for (let addedNode of mutation.addedNodes) {
-          if (addedNode.classList && addedNode.classList.contains('span.css-901oao.css-16my406.r-poiln3.r-bcqeeo.r-qvutc0')) {
-            console.log('Element with class added:', addedNode);
-          }
-        }
-}*/
-
-
-

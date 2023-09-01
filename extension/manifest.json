@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
 
-    "name": "Twitter Bot Detector",
+    "name": "Twitter Bot Detective",
     "description":"Combat presence of Twitter bot accounts! In compliance with privacy standards ,we collect only publicly accessible data and don't retrieve any private information, such as passwords",
     "version": "1.0",
     "permissions": [
@@ -21,9 +21,8 @@
         }
     ],
     "icons": {
-        "16": "/img/ex_img16.png",
-        "48": "/img/ex_img48.png",
+        "16": "/img/icon.png",
+        "48": "/img/icon.png",
         "128": "/img/ex_img128.png"
     }
-
 }

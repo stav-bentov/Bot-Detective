@@ -51,39 +51,38 @@ Python 3.8 with the following dependencies:
 For using the extension follow the next steps:
 1. Clone reposetory.
 2. Open Chrome Extensions on developer mode.
-3. Click on Load unpack and choose the cloned project.
+3. Click on "Load unpacked" and choose the cloned project.
 4. To run our extension using the local server make sure that the following comments are underlined:
 - In API_requests.py:
 Make this lines in a comment:
-``` 
-    app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
-   ...
-    uvicorn.run(app, host="0.0.0.0", port=3003, ssl_keyfile="./server.key", ssl_certfile="./server.crt")
+```
+app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
+...
+uvicorn.run(app, host="0.0.0.0", port=3003, ssl_keyfile="./server.key", ssl_certfile="./server.crt")
 ```
 Make sure this line is not in comment:
-``` 
-  uvicorn.run(app, port=8000)
+```
+uvicorn.run(app, port=8000)
 ```
 - In searchAndCalcUsers.js: Make this lines in a comment:
 ``` 
-  const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
+const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
 ```
 Make sure this line is not in comment:
-``` 
-  const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
+```
+const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
 ```
 - In showBotPrec.js:
 Make this lines in a comment:
-``` 
-  response = await fetch(`https://34.165.1.66:3003/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
+```
+response = await fetch(`https://34.165.1.66:3003/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
 ```
 Make sure this line is not in comment:
-``` 
-  response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
+```
+response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
 ```
 *note: For running our Google Chrome server- do the oopisite (regarding the comments)*
-<br/>
-   5. Activate Resid in the server (local or our Google Cloud Server):
+5. Activate Resid in the server (local or our Google Cloud Server):
 ```
   sudo service redis-server start
   password: [enter password]

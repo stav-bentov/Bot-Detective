@@ -158,26 +158,24 @@ async def followers_bots(username: str, classification: bool, followersPrec: boo
         if (bot_prec == [None, None]):
             # Assumption sum(bot_prec) <= 100
             result, bot_prec = get_bots_in_followers(model, username)
-
             # Error occured in get_bots_in_followers()
-            if (result is None and bot_prec is None):
+            if (bot_prec == [None, None]):
                 print(f"Error occured in get_bots_in_followers() for {username}")
-                return None
-            
-            # If there is at least 1 follower
-            if (result != 0):
-                # Update redis
-                expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
-                userStorageValue = {'bot_precentage': bot_prec[1], 'expiration': expirationDate}
-                userStorageValue = str(userStorageValue) # Convert dict to string according to redis storage format
-                try:
-                    r.set(redis_user_key, userStorageValue)
-                except (redis.exceptions.ConnectionError, redis.exceptions.ResponseError) as e:
-                    print("Error with Redis (Verify the Redis has started):", e)
+            else:
+                # If there is at least 1 follower
+                if (result != 0):
+                    # Update redis
+                    expirationDate = datetime.datetime.now() + datetime.timedelta(days=30) # 30 days from now
+                    userStorageValue = {'bot_precentage': bot_prec[1], 'expiration': expirationDate}
+                    userStorageValue = str(userStorageValue) # Convert dict to string according to redis storage format
+                    try:
+                        r.set(redis_user_key, userStorageValue)
+                    except (redis.exceptions.ConnectionError, redis.exceptions.ResponseError) as e:
+                        print("Error with Redis (Verify the Redis has started):", e)
 
-                # Update redis (classification of each follower)
-                for follower in result:
-                    update_redis(follower, result[follower]['classification'],result[follower]['accuracy'], expirationDate)
+                    # Update redis (classification of each follower)
+                    for follower in result:
+                        update_redis(follower, result[follower]['classification'],result[follower]['accuracy'], expirationDate)
 
     # ========================== Handle user's classification ========================== #
     classification_result = {username: None}

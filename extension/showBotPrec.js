@@ -28,13 +28,11 @@ function isSignBelongs(username, targetElement) {
     // Get image
     var spanImage = targetElement.querySelector('[SIGN_IMAGE="1"]');
     if (spanImage) {
-        console.log("in 2 if");
         console.log(`${spanImage.id}`);
 
         // Who the image is belongs to 
         // Belongs to current user
         if (spanImage.id.startsWith(username)) {
-            console.log("in 2 if");
             // Span (and info) belongs to current username
             return true;
         }
@@ -45,7 +43,6 @@ function isSignBelongs(username, targetElement) {
         // Delete/ init attributes from the span that includes @username
         var usernameSpan = targetElement.querySelector("div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span");
         if (usernameSpan){
-            console.log("in 3 if");
             usernameSpan.removeAttribute("id");
             usernameSpan.removeAttribute(STATUS);
         }
@@ -89,6 +86,7 @@ async function addInfo() {
     console.log(`changeFollowersPrecInfo: ${changeFollowersPrecInfo}`);
     
     var targetElement = document.querySelector(attributeSelectorPrec);
+    
     if (targetElement) {
         if (!isSignBelongs(username, targetElement)) {
             changeClassificationInfo = true;

@@ -286,7 +286,7 @@ def get_bots_in_followers(model, username):
 
     # Error occured
     if (response == None):
-        return None, None
+        return None, [None, None]
 
     users_ids = response["ids"]
     #print("users_ids= ", users_ids)
@@ -304,13 +304,9 @@ def get_bots_in_followers(model, username):
     bot_prec = [0, 0]
     
     users_sample = ','.join(map(str, users_sample))
-    #print("users_sample= ", users_sample)
     ids_req = f"user_id={users_sample}"
 
-    #v1
     url = f"https://api.twitter.com/1.1/users/lookup.json?{ids_req}&include_entities=false"
-    #v2
-    #url = f"https://api.twitter.com/2/users/lookup.json?
 
     # Creates a request with get_user - get response object which contains user object by username
     # RECALL: client.get_users is synchronous by default
@@ -318,7 +314,7 @@ def get_bots_in_followers(model, username):
 
     # Error ocurred
     if (response == None):
-        return None, None
+        return None, [None, None]
 
     for user in response:
         meta = get_features(user)
