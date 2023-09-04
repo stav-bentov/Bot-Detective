@@ -7,11 +7,11 @@
     "permissions": [
         "activeTab",
         "tabs",
-        "webNavigation"
+        "webNavigation",
+        "https://34.165.68.249/*"
     ],
     "host_permissions": [
-        "http://127.0.0.1/*",
-        "https://34.165.68.249/*"
+        "http://127.0.0.1/*"
     ],
     "background": {
         "service_worker": "urlChanged.js"
