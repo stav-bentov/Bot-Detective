@@ -46,7 +46,7 @@ reform_leaders = ['Netanyahu', 'rothmar'] # Netanyahu & Rotman (yariv levin has 
 number_of_followers_requests = 0 # rate limit: 15 requests per 15 minutes
 number_of_user_lookup_requests = 0 # rate limit: 900 requests per 15 minutes
 
-def get_bot_percentage_in_followers(model, username): # now taking all followers, not just 100
+def get_bot_percentage_in_followers(model, username): # now taking 10% of all followers, not just 100
     """
         Input: model- The model that classify our users
                username- The username whose followers we want to examine
@@ -55,22 +55,23 @@ def get_bot_percentage_in_followers(model, username): # now taking all followers
     global number_of_followers_requests
     global number_of_user_lookup_requests
     res = {}
-    # bot_prec[0] = number of humans, bot_prec[1] = number of bots
     bot_prec = [0, 0]
 
+    # send request to get the ids of the followers of the given username
     screen_name_req = f"screen_name={username}"
     url = f"https://api.twitter.com/1.1/followers/ids.json?{screen_name_req}"
     users_ids = send_Twitter_API_request(url)["ids"]
 
+    # check if we are about to reach rate limit of 15 followers requests per 15 minutes and if so - wait 15 minutes in order to avoid rate limit
     number_of_followers_requests += 1
     if number_of_followers_requests == NUMBER_OF_FOLLOWERS_REQUESTS_ALLOWED_IN_15_MINUTES:
         time.sleep(FIFTEEN_MINUTES)
         number_of_followers_requests = 0
-        number_of_user_lookup_requests = 0
+        number_of_user_lookup_requests = 0 # reset also the number of user lookup requests becauese we waited 15 minutes
 
     numbers_of_followers = len(users_ids)
-    users_sample = random.sample(users_ids, int(0.1 * numbers_of_followers)) # take 10% of the followers
-    # make request in bunches of 100 users each time
+    users_sample = random.sample(users_ids, int(0.1 * numbers_of_followers)) # take randomly 10% of the followers
+    # make user lookup requests in bunches of 100 users each time
     req_max_size = 100
     for i in range(0, len(users_sample), req_max_size): 
         users_batch = users_sample[i:i + req_max_size] 
@@ -81,12 +82,14 @@ def get_bot_percentage_in_followers(model, username): # now taking all followers
         # RECALL: client.get_users is synchronous by default
         users_response = send_Twitter_API_request(url)
 
+        # check if we are about to reach rate limit of 900 user lookup requests per 15 minutes and if so - wait 15 minutes in order to avoid rate limit
         number_of_user_lookup_requests += 1
         if number_of_user_lookup_requests == NUMBER_OF_USER_LOOKUP_REQUESTS_ALLOWED_IN_15_MINUTES:
             time.sleep(FIFTEEN_MINUTES)
-            number_of_followers_requests = 0
+            number_of_followers_requests = 0 # reset also the number of followers requests becauese we waited 15 minutes
             number_of_user_lookup_requests = 0
 
+        # for each user in the response - get his features and predict if he is a bot
         for user in users_response:
             meta = get_features(user)
             is_bot = model_predict_if_user_is_bot(model, meta)
@@ -106,6 +109,7 @@ def get_knesset_members_bots_percentage(model, knesset_members):
                knesset_members- The usernames of the knesset members whose followers we want to examine
         Returns: A dictonary with keys: kneset members usernames and values: percentage of bots among their followers
     """
+    # for each knesset member - get bot percentage among his followers
     knesset_members_bots_percentage = {}
     for knesset_member in enumerate(knesset_members):
         knesset_members_bots_percentage[knesset_member] = get_bot_percentage_in_followers(model, knesset_member)
@@ -115,7 +119,8 @@ def create_results_file_for_each_knesset_member(model, knesset_members):
     """
         Input: model- The model that classify our users
                knesset_members- The usernames of the knesset members whose followers we want to examine
-        Builds the file "all_knesset_members_bots_percentage.txt" which contains the percentage of bots among the followers of each knesset member
+        Builds for each knesset member file "[knesset_member]_bots_percentage.txt which contains the percentage of bots among his followers
+        (file for each knesset member because if the program stops in the middle we can continue from the last knesset member)
     """
     for knesset_member in knesset_members:
         with open(f"{knesset_member}_bots_percentage.txt", "w") as file:
@@ -124,7 +129,7 @@ def create_results_file_for_each_knesset_member(model, knesset_members):
 def create_result_file_for_all_knesset_members(knesset_members):
     """
         Input: knesset_members- The usernames of the knesset members whose followers we want to examine
-        Unite the results from all results files into one file (the files are in "knesset" folder)
+        Builds the file "all_knesset_members_bots_percentage.txt" which unites all results files into one file (the files are in "knesset" folder)
     """
     with open("all_knesset_members_bots_percentage.txt", "w") as file:
         for knesset_member in knesset_members:
@@ -140,7 +145,7 @@ def read_knesset_bot_percentage_file_to_dictionary():
     results = {}
     with open("knesset/all_knesset_members_bots_percentage.txt", "r") as file:
         for line in file:
-            data_dict = eval(line)
+            data_dict = eval(line) # convert current line (string) to dictionary
             # Merge the data_dict into result_dict
             results.update(data_dict)
     return results
@@ -160,10 +165,12 @@ def read_ministers_bot_percentage_file_to_dictionary():
 
 def get_parties_bot_percentages(knesset_members_bot_percentages):
     """
+        Input: knesset_members_bot_percentages- A dictionary with keys: kneset members usernames and values: percentage of bots among their followers
         Returns a dictionary in format -> party: bot_percentage_of_its_members (average)
     """
     parties_bot_percentages = {} # party: bot_percentage_of_its_members (average)
     for party in knesset_members_by_party:
+        # for each party - calculate the average bot percentage of its members
         parties_bot_percentages[party] = 0
         for knesset_member in knesset_members_by_party[party]:
             parties_bot_percentages[party] += knesset_members_bot_percentages[knesset_member]
@@ -171,6 +178,10 @@ def get_parties_bot_percentages(knesset_members_bot_percentages):
     return parties_bot_percentages
 
 def plot_parties_bot_percentages(knesset_members_bot_percentages):
+    """
+        Input: knesset_members_bot_percentages- A dictionary with keys: kneset members usernames and values: percentage of bots among their followers
+        Plots a bar graph of the bot percentage of each party in descending order of the number of mandates
+    """
     parties_bot_percentages = get_parties_bot_percentages(knesset_members_bot_percentages) # party: bot_percentage_of_its_members (average)
     plt.bar(range(len(parties_bot_percentages)), list(parties_bot_percentages.values()), align='center')
     plt.xticks(range(len(parties_bot_percentages)), list(parties_bot_percentages.keys()))
@@ -186,8 +197,12 @@ def plot_parties_bot_percentages(knesset_members_bot_percentages):
     plt.ylabel("Bot Percentage")
     plt.show()
 
-# Write to knesset/ministers_bot_percentage.txt the bot percentage of each minister:
 def create_results_file_of_ministers(model, knesset_members_bot_percentages):
+    """
+        Input: model- The model that classify our users
+               knesset_members_bot_percentages- A dictionary with keys: kneset members usernames and values: percentage of bots among their followers
+        Builds the file "knesset/ministers_bot_percentage.txt" which contains the bot percentage of each minister
+    """
     with open("knesset/ministers_bot_percentage.txt", "w") as file:
         for minister in ministers:
             # if the minister already calculated -> write his bot percentage
@@ -199,6 +214,10 @@ def create_results_file_of_ministers(model, knesset_members_bot_percentages):
                 file.write(f"{minister}: {get_bot_percentage_in_followers(model, minister)}\n")
 
 def plot_ministers_bot_percentages(ministers_bot_percentages):
+    """
+        Input: ministers_bot_percentages- A dictionary with keys: ministers usernames and values: percentage of bots among their followers
+        Plots a bar graph of the bot percentage of each minister in descending order of the bot percentage
+    """
     # sort the dictionary by values reversed (bot percentages)
     ministers_bot_percentages = dict(sorted(ministers_bot_percentages.items(), key=lambda item: item[1], reverse=True))
     plt.bar(range(len(ministers_bot_percentages)), list(ministers_bot_percentages.values()), align='center')
@@ -217,6 +236,10 @@ def plot_ministers_bot_percentages(ministers_bot_percentages):
     plt.show()
 
 def plot_coalition_oposition_bot_percentage():
+    """
+        Plots a bar graph of the bot percentage of the coalition and the opposition
+    """
+    # calculate the average bot percentage of the coalition and the opposition
     coalition_bot_percentage = 0
     for knesset_member in coalition_members:
         coalition_bot_percentage += knesset_members_bot_percentages[knesset_member]
@@ -227,19 +250,23 @@ def plot_coalition_oposition_bot_percentage():
         oposition_bot_percentage += knesset_members_bot_percentages[knesset_member]
     oposition_bot_percentage /= len(oposition_members)
 
-    plt.bar(["Coalition", "Oposition"], [coalition_bot_percentage, oposition_bot_percentage], align='center')
-    plt.xticks(["Coalition", "Oposition"])
+    # plot the bar graph
+    plt.bar(["Coalition", "Opposition"], [coalition_bot_percentage, oposition_bot_percentage], align='center')
+    plt.xticks(["Coalition", "Opposition"])
     plt.xticks(rotation=90)
     # add on top of each bar its value
     for i, v in enumerate([coalition_bot_percentage, oposition_bot_percentage]):
         plt.text(i - 0.1, v + 0.5, str(round(v, 2))+"%", color='blue', size=8)
 
-    plt.title("Coalition Vs. Oposition Bot Percentages")
-    plt.xlabel("Coalition Vs. Oposition")
+    plt.title("Coalition Vs. Opposition Bot Percentages")
+    plt.xlabel("Coalition Vs. Opposition")
     plt.ylabel("Bot Percentage")
     plt.show()
         
 def plot_party_leaders_bot_percentage():
+    """
+        plots a bar graph of the bot percentage of each party leader in descending order of the bot percentage
+    """
     party_leaders_bot_percentage = {} # party: bot_percentage_of_its_members (average)
     for party_leader in party_leaders:
         if party_leader in knesset_members_bot_percentages: # if the party leader is a knesset member
@@ -260,11 +287,16 @@ def plot_party_leaders_bot_percentage():
     plt.show()
 
 def plot_protesters_leaders_vs_reform_leaders_bot_percentage():
+    """
+        Plots a bar graph of the bot percentage of the protest leaders and the reform leaders
+    """
+    # calculate the average bot percentage of the protest leaders and the reform leaders
     protest_leaders_bot_percentage = 0
     for protest_leader in protest_leaders:
         protest_leaders_bot_percentage += get_bot_percentage_in_followers(model, protest_leader)
     protest_leaders_bot_percentage /= len(protest_leaders)
 
+    # in reform leaders we can retrieve the results from the dictionaries already calculated
     reform_leaders_bot_percentage = 0
     for reform_leader in reform_leaders:
         if reform_leader in knesset_members_bot_percentages:
@@ -275,6 +307,7 @@ def plot_protesters_leaders_vs_reform_leaders_bot_percentage():
             reform_leaders_bot_percentage += get_bot_percentage_in_followers(model, reform_leader)
     reform_leaders_bot_percentage /= len(reform_leaders)
 
+    # plot the bar graph
     plt.bar(["Protest Leaders", "Reform Leaders"], [protest_leaders_bot_percentage, reform_leaders_bot_percentage], align='center')
     plt.xticks(["Protest Leaders", "Reform Leaders"])
     plt.xticks(rotation=90)
