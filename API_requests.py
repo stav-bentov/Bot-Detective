@@ -220,7 +220,7 @@ async def followers_bots(username: str, classification: bool, followersPrec: boo
     return {"humans": bot_prec[0], "bots": bot_prec[1], "classification_res": None}
 
 # VM ONLY- Remove comment
-#app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
+app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
 
 app.add_middleware(
     CORSMiddleware,
@@ -232,6 +232,6 @@ app.add_middleware(
 
 if __name__ == "__main__":
     # Local ONLY:
-    uvicorn.run(app, port=8000)
+    #uvicorn.run(app, port=8000)
     # VM:
-    #uvicorn.run(app, host="0.0.0.0", port=3003, ssl_keyfile="./server.key", ssl_certfile="./server.crt")
+    uvicorn.run(app, host="0.0.0.0", port=3003, ssl_keyfile="./server.key", ssl_certfile="./server.crt")
