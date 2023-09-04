@@ -258,6 +258,10 @@ def plot_coalition_oposition_bot_percentage():
     for i, v in enumerate([coalition_bot_percentage, oposition_bot_percentage]):
         plt.text(i - 0.1, v + 0.5, str(round(v, 2))+"%", color='blue', size=8)
 
+    # make the plot more readable
+    plt.ylim(0, 41)
+    plt.yticks(range(0, 41, 10))
+
     plt.title("Coalition Vs. Opposition Bot Percentages")
     plt.xlabel("Coalition Vs. Opposition")
     plt.ylabel("Bot Percentage")
@@ -325,6 +329,6 @@ ministers_bot_percentages = read_ministers_bot_percentage_file_to_dictionary() #
 
 #plot_parties_bot_percentages(knesset_members_bot_percentages)
 #plot_ministers_bot_percentages(ministers_bot_percentages)
-#plot_coalition_oposition_bot_percentage()
+plot_coalition_oposition_bot_percentage()
 #plot_party_leaders_bot_percentage()
 #plot_protesters_leaders_vs_reform_leaders_bot_percentage()
