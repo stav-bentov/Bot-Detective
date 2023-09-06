@@ -96,6 +96,14 @@ response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username
 7. Go back to Chrome Extension for developer and activate the extension.
 8. You can browse through Twitter and have fun with Bot Detective.
 
+## Files/ Folders Descriptor
+- `extension` Code of extension, including menifest, content scripts and background script.
+- `API_requests.py` The server, created by using Fast API, get the requests and generate responses with the help of `Detector.py` that runs the model. 
+- `Detector.py` Use the model and Twitter API for calculating results of classification and information about followers. 
+- `Build_Dataset.py` Building of united dataset: `Datasets/all_df.csv`, calculate metadata and dervied features.
+- `Build_Model.py` Building the Random Forest model based on the united dataset: `Datasets/all_df.csv`. This script includes grid search of Gaussian Naive Bayes, Random Forest and Linear SVC classifiers. 
+- `Datasets` Include classified Twitter users and united dataset `all_df.csv`.
+
 ## Visual Overview
 - #### User's classifications
 While browsing- indicators appear, each accompanied by a popup displaying warnings and the classification accuracy (showed when mouse is over it).
