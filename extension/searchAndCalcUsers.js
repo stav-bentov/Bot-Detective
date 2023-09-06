@@ -9,7 +9,13 @@ const attributeSelectorClassification1 = '[data-testid="User-Name"]';
 const attributeSelectorClassification2 = '[data-testid="UserCell"]';
 // Usernames from profile page
 const attributeSelectorClassification3 = '[data-testid="UserName"]';    
-
+// For each Div out of the ones with attributeSelectorClassification, we look for the span with @username (each span has diffrent JS paths)
+const spanOptions1 = ['div.css-1dbjc4n.r-18u37iz.r-1wbh5a2.r-13hce6t > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs > a > div > span',
+                      'div > div.css-1dbjc4n.r-18u37iz.r-1wbh5a2.r-13hce6t > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs > div > div > span',
+                      'div.css-1dbjc4n.r-18u37iz.r-1wbh5a2 > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs > a > div > span'];
+const spanOptions2 = ['div > div.css-1dbjc4n.r-1iusvr4.r-16y2uox > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wtj0ep > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > a > div > div > span',
+                      'div > div > div.css-1dbjc4n.r-1iusvr4.r-16y2uox.r-1777fci > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span'];
+const spanOptions3 = ['div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span']
 // Every mutation will be filled and then erased
 var mutationDict = {};
 // In every interval/1000 seconds we will copy mutationDict to usersOnRequestDict and run makeRequest on the users, the results will be saved there
@@ -129,9 +135,9 @@ async function makeRequests() {
         
         // Make API requests for classify human/bot (runs the model on username or get from Redis)
         // LOCAL: FastAPI
-        //const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
+        const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
         // VM: FastAPI
-        const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
+        // const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
 
         const data = await response.json(); // data is dict of dicts: {username:{classification:class, accuracy:acc}}
         console.log(`data is recived from request: ${data}`);
@@ -207,6 +213,9 @@ function processUserSpan(usernameSpan)
  * Process mutations: Pass over any mutation and get the new usernames on screen (according to data-testid)
  */
 function processMutation() {
+    var usernameSpan;
+    var userNamesDivsElements;
+
     // Last mutation was handeled
     if (mutationQueue.length == 0) {
         inProcessMutation = false;
@@ -223,61 +232,47 @@ function processMutation() {
             if (addedNode instanceof HTMLElement) {
 
                 // Tweet/ reTweet
-                var userNamesDivsElements = addedNode.querySelectorAll(attributeSelectorClassification1);
+                userNamesDivsElements = addedNode.querySelectorAll(attributeSelectorClassification1);
                 userNamesDivsElements.forEach(element => {
-                    // From tweet
-                    var usernameSpan = element.querySelector('div.css-1dbjc4n.r-18u37iz.r-1wbh5a2.r-13hce6t > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs > a > div > span');
-                    // Found required element
-                    if(usernameSpan) {
-                        processUserSpan(usernameSpan);
-                    }
-                    else
-                    {
-                        // From retweet
-                        usernameSpan =  element.querySelector("div > div.css-1dbjc4n.r-18u37iz.r-1wbh5a2.r-13hce6t > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs > div > div > span");
-                        if(usernameSpan) {
-                            console.log(`found in Retweet section`);
+                    // From tweets/ retweets
+                    for (let i = 0; i < spanOptions1.length; i++) {
+                        usernameSpan = element.querySelector(spanOptions1[i]);
+                        if (usernameSpan)
+                        {
+                            // Found the right span
                             processUserSpan(usernameSpan);
+                            break;
                         }
-                        else
-                            console.log(`no username in datatestid: ${element.innerHTML}`);
                     }
                 });
 
                 // Follows/ Following/ Likes/ Reposted By/Search
                 userNamesDivsElements = addedNode.querySelectorAll(attributeSelectorClassification2);
                 userNamesDivsElements.forEach(element => {
-                    // From Follows/ Following/ Likes/ Reposted By
-                    var usernameSpan = element.querySelector("div > div.css-1dbjc4n.r-1iusvr4.r-16y2uox > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wtj0ep > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > a > div > div > span");
-                    // Found required element
-                    if(usernameSpan) {
-                        processUserSpan(usernameSpan);
-                    }
-                    else
-                    {
-                        // Check if its a Search section
-                        usernameSpan = element.querySelector("div > div > div.css-1dbjc4n.r-1iusvr4.r-16y2uox.r-1777fci > div > div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span")
-                        if(usernameSpan) {
-                            console.log(`found in Search section`);
+                    // From Follows/ Following/ Likes/ Reposted By/ Search section
+                    for (let i = 0; i < spanOptions2.length; i++) {
+                        usernameSpan = element.querySelector(spanOptions2[i]);
+                        if (usernameSpan)
+                        {
+                            // Found the right span
                             processUserSpan(usernameSpan);
+                            break;
                         }
-                        else
-                            console.log(`no username in datatestid: ${element.innerHTML}`);
                     }
                 });
 
                 // Profile
                 userNamesDivsElements = addedNode.querySelectorAll(attributeSelectorClassification3);
                 userNamesDivsElements.forEach(element => {
-                    console.log(`Detect mutation in Profile`);
-                    var usernameSpan = element.querySelector("div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span");
-                    // Found required element
-                    if(usernameSpan) {
-                        console.log(`In profile option for: ${usernameSpan.innerHTML}`);
-                        processUserSpan(usernameSpan);
+                    for (let i = 0; i < spanOptions3.length; i++) {
+                        usernameSpan = element.querySelector(spanOptions3[i]);
+                        if (usernameSpan)
+                        {
+                            // Found the right span
+                            processUserSpan(usernameSpan);
+                            break;
+                        }
                     }
-                    else
-                        console.log(`no username in datatestid: ${element.innerHTML}`);
                 });
             }      
         }

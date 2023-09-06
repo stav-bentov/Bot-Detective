@@ -34,7 +34,11 @@ Fix the appendecies
 Fix img
 V Check there is no Flask (FAST API)
 Decide about descriptions
-Keep build User Study
+
+Make italic on Bot Detective in everything
+add Refrence to user study
+Update names in Github
+Remove comments
 
 In Git:
 Add powerpoint and article
