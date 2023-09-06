@@ -50,6 +50,9 @@ Python 3.8 with the following dependencies:
 ## Usage
 For using the extension follow the next steps:
 1. Clone reposetory.
+```
+  git clone https://github.com/stav-bentov/Bot-Detective.git
+```
 2. Open Chrome Extensions on developer mode.
 3. Click on "Load unpacked" and choose the folder: `extension` in the cloned project.
 4. To run our extension using the local server make sure that the following comments are underlined:
