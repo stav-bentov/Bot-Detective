@@ -51,7 +51,7 @@ Python 3.8 with the following dependencies:
 For using the extension follow the next steps:
 1. Clone reposetory.
 2. Open Chrome Extensions on developer mode.
-3. Click on "Load unpacked" and choose the cloned project.
+3. Click on "Load unpacked" and choose the folder: `extension` in the cloned project.
 4. To run our extension using the local server make sure that the following comments are underlined:
 - In API_requests.py:
 Make this lines in a comment:
@@ -98,7 +98,11 @@ response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username
 
 ## Visual Overview
 - #### User's classifications
-While browsing- indicators appear, each accompanied by a popup displaying warnings and the classification accuracy.
+While browsing- indicators appear, each accompanied by a popup displaying warnings and the classification accuracy (showed when mouse is over it).
+<p align="center">  <img src="Gifs/bots in reposted by.gif" align="center"> </p> 
+
+- #### Informative Popup
+When clicking the bot/human sign, an informative popup is displayed, providing details on scenarios where bots posed a risk by including quotes and links to news and articles.
 <p align="center">  <img src="Gifs/bots in reposted by.gif" align="center"> </p> 
 
 - #### General Browsing Experience

@@ -1,6 +1,6 @@
 # Exploring Bot Influence
 
-Here you can find the scripts and graphs for our analysis of Knesset members' followers. We conducted an examination of bots among Knesset members' followers by randomly selecting and analyzing 10% of them. 
+In this folder, you'll find the scripts and graphs for our analysis of Knesset members' followers. We conducted an examination of bots among Knesset members' followers by randomly selecting and analyzing 10% of them. 
 
 The code is located in `Knesset_Bots.py`.
 
