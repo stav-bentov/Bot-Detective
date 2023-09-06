@@ -113,5 +113,5 @@ While browsing- indicators appear, each accompanied by a popup displaying warnin
 When clicking the bot/human sign, an informative popup is displayed, providing details on scenarios where bots posed a risk by including quotes and links to news and articles.
 <p align="center">  <img src="Gifs/informativePopup.gif" align="center"> </p> 
 
-- #### General Browsing Experience
+- #### Browsing Experience
 <p align="center">  <img src="Gifs/part action gif.gif" align="center"> </p> 
