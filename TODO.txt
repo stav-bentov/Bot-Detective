@@ -32,16 +32,16 @@ V Add bots steal prsonal information
 V Maybe add this article: https://nypost.com/2023/08/24/scientists-found-1140-ai-bots-on-x-creating-fake-profiles/
 V Check there is no Flask (FAST API)
 
-Decide about descriptions
-Fix the appendecies
-Fix img
+V Decide about descriptions
+V Fix the appendecies
+V Fix img
 Make italic on Bot Detective in everything
-add Refrence to user study
+V add Refrence to user study
 Update names in Github
-Remove comments
+V Remove comments
 
 In Git:
-Add powerpoint and article
+V Add powerpoint and article
 
 In userstudy:
 Maybe find other users for classification.

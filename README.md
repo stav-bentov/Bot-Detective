@@ -89,12 +89,20 @@ response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username
   password: [enter password]
   redis-cli
 ```
-6. Run on the server:
+6. Create a file in main directory named `access_keys.py`:
+```
+  consumer_key = __Fill you consumer key__
+  consumer_secret = __Fill you consumer secret__
+  bearer_token = __Fill you bearer token__
+  access_token_key = __Fill you access token key__
+  access_token_secret = __Fill you access token secret__
+```
+7. Run on the server:
 ``` 
     python API_requests.py
 ```
-7. Go back to Chrome Extension for developer and activate the extension.
-8. You can browse through Twitter and have fun with Bot Detective.
+8. Go back to Chrome Extension for developer and activate the extension.
+9. You can browse through Twitter and have fun with Bot Detective.
 
 ## Files/ Folders Descriptor
 - `/extension` Code of extension, including menifest, content scripts and background script.
