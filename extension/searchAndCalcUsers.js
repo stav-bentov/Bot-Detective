@@ -132,9 +132,9 @@ async function makeRequests() {
         
         // Make API requests for classify human/bot (runs the model on username or get from Redis)
         // LOCAL: FastAPI
-        const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
+        //const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
         // VM: FastAPI
-        // const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
+         const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
 
         const data = await response.json(); // data is dict of dicts: {username:{classification:class, accuracy:acc}}
         
