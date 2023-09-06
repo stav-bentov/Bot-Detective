@@ -62,7 +62,6 @@ const informativePopupContent = `
 /* ============================================================================= */
 const informativePopup = createInformationPopup();
 
-
 /* ============================================================================= */
 /* ================================= FUNCTIONS ================================= */
 /* ============================================================================= */
@@ -79,7 +78,6 @@ function createInformationPopup() {
 
     // Disappear on click
     InformativePopup.addEventListener("click", function (event) {
-        console.log("clicked!");
         if (event.target == InformativePopup)
             InformativePopup.style.visibility = "hidden";
     });
@@ -126,7 +124,6 @@ function createInformationPopup() {
  *         else- MISSING
  */
 function checkAvailabilityAndExpiration(localStorageUserKey, searchType) {
-    console.log(`checkAvailabilityAndExpiration for ${localStorageUserKey}`);
     var currentDate = new Date();
     var userStorageValue = localStorage.getItem(localStorageUserKey);
 
@@ -139,10 +136,8 @@ function checkAvailabilityAndExpiration(localStorageUserKey, searchType) {
         }
         // Else- data is up to date
         if (searchType == BOT_PREC_TYPE) {
-            console.log(`from checkAvailabilityAndExpiration:${userDict.bot_precentage}`);
             return userDict.bot_precentage;
         }
-        console.log(`from checkAvailabilityAndExpiration:${userDict.classification}`);
         return userDict.classification;
     }
     // Not in local storage
@@ -248,8 +243,8 @@ function createBotHumanImage(accuracy, isBot) {
  * @param {int} accuracy 
  */
 function addSign(elementId, isBot, accuracy) {  
-    console.log(`In add sign for ${elementId}`);
     var usernameElement = document.getElementById(elementId);
+    // Element is found
     if (usernameElement) { 
         // ASSUMPTION: It has to have STATUS attribute
         if (usernameElement.hasAttribute(STATUS) && usernameElement.getAttribute(STATUS) == NOT_UPDATED) {
@@ -263,8 +258,4 @@ function addSign(elementId, isBot, accuracy) {
             usernameElement.parentElement.parentElement.parentElement.insertAdjacentElement('afterend', imgElement); 
         }
     }
-    else {
-        console.log(`usernameElement is null for ${elementId}`);
-    }
-    console.log(`Done addSign ${elementId}`);
 }

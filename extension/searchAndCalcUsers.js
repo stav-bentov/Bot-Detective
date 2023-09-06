@@ -102,15 +102,12 @@ function setRequestDict(){
     usersOnRequestDict = {...mutationDict};
     mutationDict = {};
     setObserver();
-
-    console.log(usersOnRequestDict);
 }
 
 /**
  * Pass over usersOnRequestDict, for each bot user- adds a sign near the matching elementId.
  */
 function setSigns(){
-    console.log(JSON.stringify(usersOnRequestDict, null, 2));
     var result;
     for (var user in usersOnRequestDict){
         // Check if result in local storage (if the server returned the result it should be there)
@@ -140,7 +137,6 @@ async function makeRequests() {
         // const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
 
         const data = await response.json(); // data is dict of dicts: {username:{classification:class, accuracy:acc}}
-        console.log(`data is recived from request: ${data}`);
         
         // Read the result from the response and set the classification & accuracy in local storage
         for (var user in data){
@@ -188,9 +184,7 @@ function processUserSpan(usernameSpan)
         userResult = checkAvailabilityAndExpiration(username, USER_BOT_TYPE);
         // Case 1: User is already classified (result in LOCAL STORAGE)
         if (userResult != MISSING) {
-            console.log(`${username} is already calculated and got: ${userResult}`);
             var accuracy = JSON.parse(localStorage.getItem(username)).accuracy;
-            console.log(`get in to addSign with ${usernameSpan.id}`);
             addSign(usernameSpan.id, userResult, accuracy);
         }
         // Case 2: User is not in local storage- add to dict for future request from server

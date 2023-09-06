@@ -97,12 +97,13 @@ response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username
 8. You can browse through Twitter and have fun with Bot Detective.
 
 ## Files/ Folders Descriptor
-- `extension` Code of extension, including menifest, content scripts and background script.
+- `/extension` Code of extension, including menifest, content scripts and background script.
 - `API_requests.py` The server, created by using Fast API, get the requests and generate responses with the help of `Detector.py` that runs the model. 
 - `Detector.py` Use the model and Twitter API for calculating results of classification and information about followers. 
 - `Build_Dataset.py` Building of united dataset: `Datasets/all_df.csv`, calculate metadata and dervied features.
 - `Build_Model.py` Building the Random Forest model based on the united dataset: `Datasets/all_df.csv`. This script includes grid search of Gaussian Naive Bayes, Random Forest and Linear SVC classifiers. 
-- `Datasets` Include classified Twitter users and united dataset `all_df.csv`.
+- `/Datasets` Include classified Twitter users and united dataset `all_df.csv`.
+- `/Videos`, `/Articles`,`/Gifs`,`/Photos`, `/Knesset` Folders that are not part of the technical develop of Bot Detctive, read README of them for more info.
 
 ## Visual Overview
 - #### User's classifications
@@ -111,7 +112,7 @@ While browsing- indicators appear, each accompanied by a popup displaying warnin
 
 - #### Informative Popup
 When clicking the bot/human sign, an informative popup is displayed, providing details on scenarios where bots posed a risk by including quotes and links to news and articles.
-<p align="center">  <img src="Gifs/informativePopup.gif" align="center"> </p> 
+<p align="center">  <img src="Gifs/bots in reposted by.gif" align="center"> </p> 
 
-- #### Browsing Experience
+- #### General Browsing Experience
 <p align="center">  <img src="Gifs/part action gif.gif" align="center"> </p> 

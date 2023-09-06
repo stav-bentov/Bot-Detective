@@ -25,8 +25,10 @@ def grid_search_nb(X, Y):
     grid = GridSearchCV(estimator = nb, param_grid = grid_space, verbose = 1, cv = 5, n_jobs = -1, scoring ='accuracy')
     model_grid = grid.fit(X, Y)
 
+    print("=======================Gaussian NB==============================")
     print('Best hyperparameters are: '+str(model_grid.best_params_))
     print('Best score is: '+str(model_grid.best_score_))
+    print("================================================================")
     return model_grid.best_score_
 
 def grid_search_rf(X, Y):
@@ -42,9 +44,10 @@ def grid_search_rf(X, Y):
     grid = GridSearchCV(estimator = rf,param_grid = grid_space,cv = 5, scoring ='accuracy')
     model_grid = grid.fit(X, Y)
 
+    print("=======================Random Forest============================")
     print('Best hyperparameters are: '+str(model_grid.best_params_))
     print('Best score is: '+str(model_grid.best_score_))
-    print("end rf")
+    print("================================================================")
     return model_grid.best_score_
 
 def grid_search_lsvc(X, Y):
@@ -64,8 +67,10 @@ def grid_search_lsvc(X, Y):
     # run the grid search
     model_grid = grid.fit(X, Y)
 
+    print("=======================linearSVC================================")
     print('Best hyperparameters are: '+str(model_grid.best_params_))
     print('Best score is: '+str(model_grid.best_score_))
+    print("================================================================")
     return model_grid.best_score_
 
 def find_best_model(X, Y):
@@ -105,7 +110,7 @@ def create_and_save_model():
 
     # Calculates 5 fold cross validation test
     scores = cross_val_score(model, X, Y, cv = 5)
-    print("cross validation scores: ", scores.mean()) # scores.mean() = 0.962
+    print("Cross validation scores: ", scores.mean()) # scores.mean() = 0.962
 
     # Savea the model
     with open('detector_model.pkl', 'wb') as f: # wb = write binary
@@ -214,9 +219,9 @@ def plot_Confusion_Matrix_Heatmap():
     plt.ylabel("True Labels")
     plt.show()
 
+create_and_save_model()
+
 #check_features()
 #plot_feature_importance()
 #plot_Confusion_Matrix_Heatmap()
 #plot_shap()
-
-create_and_save_model()

@@ -5,12 +5,22 @@
 /* ============================================================================= */
 /* ============================ Variable Defenition ============================ */
 /* ============================================================================= */
-const spanSelector = '#react-root > div > div > div.css-1dbjc4n.r-18u37iz.r-13qz1uu.r-417010 > main > div > div > div > div.css-1dbjc4n.r-14lw9ot.r-jxzhtn.r-1ljd8xs.r-13l2t4g.r-1phboty.r-16y2uox.r-1jgb5lz.r-11wrixw.r-61z16t.r-1ye8kvj.r-13qz1uu.r-184en5c > div > div:nth-child(3) > div > div > div > div > div.css-1dbjc4n.r-13awgt0.r-18u37iz.r-1w6e6rj';
-const attributeSelectorPrec = '[data-testid="UserName"]'
-const infoId = "_bots_prec_info";
-const savedWords = ["home", "explore", "notifications", "messages", , "i"];
-const validForthPath = ["likes", "media", "with_replies"];
 const NUM_FOLLOWERS_CHECKED = 100;
+
+// Div to find @username in Profile page
+const spanSelector = '#react-root > div > div > div.css-1dbjc4n.r-18u37iz.r-13qz1uu.r-417010 > main > div > div > div > div.css-1dbjc4n.r-14lw9ot.r-jxzhtn.r-1ljd8xs.r-13l2t4g.r-1phboty.r-16y2uox.r-1jgb5lz.r-11wrixw.r-61z16t.r-1ye8kvj.r-13qz1uu.r-184en5c > div > div:nth-child(3) > div > div > div > div > div.css-1dbjc4n.r-13awgt0.r-18u37iz.r-1w6e6rj';
+// Span of @username
+const attributeSelectorPrec = '[data-testid="UserName"]'
+// id for information span
+const infoId = "_bots_prec_info";
+
+// There are curtain paths to Profile Page
+// The valid:
+const validForthPath = ["likes", "media", "with_replies"];
+// user can't be one of them:
+const savedWords = ["home", "explore", "notifications", "messages", "i"];
+
+// Object for saving followers information on local storage
 let userInStorageBotPrec = {
     bot_precentage: MISSING,
     expiration: MISSING
@@ -18,7 +28,7 @@ let userInStorageBotPrec = {
 
 /* Checking local storage*/
 if (typeof(Storage) !== "undefined") {
-    console.log("ClocalStorage/sessionStorage is good to go!");
+    console.log("localStorage/sessionStorage is good to go!");
 } else {
     console.log("Sorry! No Web Storage support..");
 }
@@ -43,8 +53,6 @@ function isSignBelongs(username, targetElement) {
     // Get image
     var spanImage = targetElement.querySelector('[SIGN_IMAGE="1"]');
     if (spanImage) {
-        console.log(`${spanImage.id}`);
-
         // Who the image is belongs to? 
         // Belongs to current user
         if (spanImage.id.startsWith(username)) {
@@ -78,7 +86,6 @@ async function addInfo() {
 
     // Get username from url
     var username = window.location.href.split("/")[3];
-    console.log(`In profile page of:${username}`);
 
     // request = true if we need to ask from server
     var requestClassification = false;
@@ -125,8 +132,6 @@ async function addInfo() {
         
         // If at least one of the requests is required
         if (requestFollowersPrec || requestClassification) {
-            console.log(`requestFollowersPrec= ${requestFollowersPrec}`);
-            console.log(`requestClassification= ${requestClassification}`);
             try {
                 // Make Http request
                 // LOCAL:
@@ -137,12 +142,10 @@ async function addInfo() {
 
                 // Error occured in fetch
                 if (!response) {
-                    console.log("Error in fetch showBotPrec");
                     return;
                 }
 
                 requestData = await response.json(); // response.json() is a dict with keys humans, bots
-                console.log(`requestData: ${requestData}`);
 
                 // =================== Update local Storage ===================
                 if (requestClassification && requestData["classification_res"]) {
@@ -167,23 +170,15 @@ async function addInfo() {
 
         // Check local storage again
         if (changeClassificationInfo) {
-            console.log(`changeClassificationInfo`);
             if (botClassification != MISSING) {
-                console.log(`botClassification != MISSING`);
                 // Now the classification result is in local storage (and in botClassification) then add sign
                 var accuracy = JSON.parse(localStorage.getItem(username)).accuracy;
-                console.log(`botClassification: ${accuracy}`);
                 var usernameSpan = targetElement.querySelector("div.css-1dbjc4n.r-1wbh5a2.r-dnmrzs.r-1ny4l3l > div > div.css-1dbjc4n.r-1awozwy.r-18u37iz.r-1wbh5a2 > div > div > div > span");
+                // Element is found
                 if (usernameSpan) {
-                    console.log(`usernameSpan`);
                     usernameSpan.id = `${username}_from_showBotPrec`;
                     usernameSpan.setAttribute(STATUS, NOT_UPDATED);
                     addSign(usernameSpan.id, botClassification, accuracy);
-                }
-                else
-                {
-                    
-                    console.log(`Didnt found!`);
                 }
             }    
         }
@@ -194,7 +189,6 @@ async function addInfo() {
         }
     
     }
-    console.log(`Done showBot`);
 }
 
 /**
@@ -209,17 +203,13 @@ function checkDisplayedInfo(username) {
     var infoElement = document.getElementById(infoId);
     if (infoElement)
     {
-        console.log(`There is an info element for ${infoElement.getAttribute('data-username')}`);
         // Check if it's info of current user
         if (infoElement.getAttribute('data-username') == username)
         {
-            console.log("No need to change info");
             return OK;
         }
-        console.log("Need to change info");
         // Delete element and childs
         while (infoElement.firstChild) {
-            console.log(`delete: ${infoElement.firstChild}`);
             infoElement.removeChild(infoElement.firstChild);
         }
         return infoElement;
@@ -241,7 +231,6 @@ function addElement(botPrecentage, targetElement, username, container) {
     // Or there is no followers to this account
     if (!targetElement || numFollowersChecked == 0)
     {
-        console.log("targetElement not exist");
         return;
     }
 
@@ -351,7 +340,6 @@ function checkUrl(url){
       https://twitter.com/i/verified-choose
      */
     var urlArray = url.split("/");
-    console.log(`url array: ${urlArray}`);
     if (urlArray.length == 5 || urlArray.length == 4)
     {
         // We are looking for urls: (1) https://twitter.com/username (2) https://twitter.com/username/(likes or media or with replies)
@@ -377,7 +365,6 @@ function checkUrl(url){
 /* ============================================================================= */
 
 /* Listeners SETUP */
-console.log("In content-script");
 
 /* Make sure content script can recieve messages*/
 chrome.runtime.onMessage.addListener(async function(request, sender, sendResponse) {
@@ -386,11 +373,9 @@ chrome.runtime.onMessage.addListener(async function(request, sender, sendRespons
       await addInfo();
     }
 });
-console.log("Content script listens to messages");
 
 // Let the background script know that the content script is ready
 chrome.runtime.sendMessage({ message: 'contentScriptIsReady' });
-console.log("Content script sent READY message to background");
 /* DONE Listeners SETUP */
 
 // Handle current page

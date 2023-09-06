@@ -158,11 +158,9 @@ async def followers_bots(username: str, classification: bool, followersPrec: boo
     if (followersPrec):
         # Assumption- there is not username with the name {username}_followers
         redis_user_key = f'{username}_followers'
-        print("userkey:" ,redis_user_key)
         # If the result of username (followers) is saved and up to date- return its value
         try:
             if r.get(redis_user_key) is not None:
-                print("in redis!")
                 userStorageValue = eval(r.get(redis_user_key))
                 expirationDate = datetime.datetime.strptime(str(userStorageValue['expiration']), '%Y-%m-%d %H:%M:%S.%f')
                 if expirationDate <= datetime.datetime.now(): # Redis value is still valid (has not expired yet)
