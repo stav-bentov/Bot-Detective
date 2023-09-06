@@ -89,7 +89,7 @@ def get_user_info(file_name, current_row, target, user):
                current_row (used for get_created_at()) of the current observed user,
                target - bot or not,
                user- for json files it's a dictonary with user metadata, for csv it's the row
-        Returns: dictonary which represents a row that will be added to the main dataframe,
+        Returns: Dictonary which represents a row that will be added to the main dataframe,
                  the new row consist from the required user-metadata and derived features
     """
     # In tweets probe time = created time (of the tweets), in fake followers = updated, in others = crawled_at (collection time)
@@ -109,16 +109,15 @@ def get_user_info(file_name, current_row, target, user):
 
     # Add user metadata
     for user_meta in user_metadata:
-        if user_meta not in boolean_features: # if not boolean feature
-            new_row[user_meta] = user[user_meta] # add the value as usual
+        if user_meta not in boolean_features: # If not boolean feature
+            new_row[user_meta] = user[user_meta] # Add the value as usual
         else: 
             if user[user_meta] == "" or user[user_meta] == False:
                 new_row[user_meta] = 0
             elif user[user_meta] == True or user[user_meta] == 1:
                 new_row[user_meta] = 1
             else:
-                print("Error: boolean feature is not boolean")
-                print(user[user_meta])
+                #boolean feature is not boolean
                 exit(1) 
     
     # get created_at as datetime.datetime object with the right format
