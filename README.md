@@ -17,7 +17,7 @@ The user classification is performed by a Random Forest model, which utilizes th
 The ML model we created is based on the article:"Scalable and Generalizable Social Bot Detection through Data Selection", it uses 4 diffrent classified datasets of Twitter users that were manually labeled as bots or not bots based on their metadata, such as the number of followers, following, tweets and likes.
 The model was developed using Python and various libraries such as pandas and scikit-learn. 
 **Dataset Building:**  The process of constructing the unified dataset is detailed in Build_Dataset.py. The resulting consolidated dataset is available at "Datasets/all_df.csv," while the individual datasets are stored within the "Datasets" folder.
-**Model Construction:** For the model creation procedure, you can refer to the Build_model.py. This script also encompasses an analysis of the model's performance against various alternative classifiers.
+**Model Construction:** For the model creation procedure, you can refer to the `Build_model.py`. This script also encompasses an analysis of the model's performance against various alternative classifiers.
 
 ## Features
 Our extension include 2 main feature based on bot classification:
@@ -56,7 +56,7 @@ For using the extension follow the next steps:
 2. Open Chrome Extensions on developer mode.
 3. Click on "Load unpacked" and choose the folder: `extension` in the cloned project.
 4. To run our extension using the local server make sure that the following comments are underlined:
-- In API_requests.py:
+- In `API_requests.py`:
 Make this lines in a comment:
 ```
 app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
