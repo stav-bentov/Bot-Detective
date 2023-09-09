@@ -84,7 +84,7 @@ Make sure this line is not in comment:
 ```
 response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
 ```
-*note: For running our Google Chrome server- do the oopisite (regarding the comments)*
+*note: For running our Google Chrome server- do the oopisite (regarding the comments) and make sure the server is **activated***
 
 <br/>5. Activate Redis in the server (local or our Google Cloud Server):
 ```
