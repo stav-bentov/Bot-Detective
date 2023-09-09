@@ -25,7 +25,7 @@ Our extension includes 2 main features based on bot classification:
 - **Number of bots in 100 randomly chosen followers:** For every user, an analysis of the amount of bots among 100 randomly selected followers is displayed in Profile page.<br/> We can see below an example of bot indicator and number of bots in 100 randomly chosen followers:<p align="center"><img src="https://github.com/stav-bentov/Twitter-Bot-Detector/blob/main/Gifs/bot%20and%20followers.gif"></p>
 
 ## Paper
-[Technical Report](https://github.com/stav-bentov/Bot-Detective/blob/main/Project%20Documents/Bot_Detective_Technical_Report.pdf)
+[Technical Report](https://github.com/stav-bentov/Bot-Detective/blob/main/Project%20Documents/technical-report.pdf)
 
 ## Requirements:
 Python 3.9 with the following dependencies:
