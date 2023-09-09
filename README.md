@@ -27,7 +27,6 @@ Our extension includes 2 main features based on bot classification:
 ## Paper
 [Technical Report](https://github.com/stav-bentov/Bot-Detective/blob/main/Project%20Documents/Bot_Detective_Technical_Report.pdf)
 
-
 ## Requirements:
 Python 3.9 with the following dependencies:
 - fastapi
