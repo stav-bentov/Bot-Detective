@@ -29,7 +29,7 @@ Our extension include 2 main feature based on bot classification:
 
 
 ## Requirements:
-Python 3.8 with the following dependencies:
+Python 3.9 with the following dependencies:
 - fastapi
 - uvicorn
 - redis
