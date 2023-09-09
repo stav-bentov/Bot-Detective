@@ -55,9 +55,9 @@ For using the extension follow the next steps:
 ```
 2. Open [Chrome Extensions](chrome://extensions/) on developer mode.
 3. Click on "Load unpacked" and choose the folder: `extension` in the cloned project.
-4. To run our extension using the local server make sure that the following comments are underlined:
+4. To run our extension using the **local server** follow the next instructions:
 - In `API_requests.py`:
-Make this lines in a comment:
+Make these lines in a comment:
 ```
 app.add_middleware(HTTPSRedirectMiddleware)  # Redirect HTTP to HTTPS
 ...
@@ -67,7 +67,8 @@ Make sure this line is not in comment:
 ```
 uvicorn.run(app, port=8000)
 ```
-- In searchAndCalcUsers.js: Make this lines in a comment:
+- In searchAndCalcUsers.js:
+Make these lines in a comment:
 ``` 
 const response = await fetch(`https://34.165.1.66:3003/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
 ```
@@ -76,7 +77,7 @@ Make sure this line is not in comment:
 const response = await fetch(`http://127.0.0.1:8000/isBot/${Object.keys(usersOnRequestDict).join(',')}`);
 ```
 - In showBotPrec.js:
-Make this lines in a comment:
+Make these lines in a comment:
 ```
 response = await fetch(`https://34.165.1.66:3003/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
 ```
@@ -84,7 +85,7 @@ Make sure this line is not in comment:
 ```
 response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username}&classification=${requestClassification}&followersPrec=${requestFollowersPrec}`);
 ```
-*note: For running our Google Chrome server- do the oopisite (regarding the comments) and make sure the server is **activated***.
+*note: For running our Google Chrome server- do the opposite (regarding the comments) and make sure the server is **activated***.
 
 <br/>5. Activate Redis in the server (local or our Google Cloud Server):
 ```
@@ -103,6 +104,10 @@ response = await fetch(`http://127.0.0.1:8000/followersBots/?username=${username
 7. Run on the server:
 ``` 
     python API_requests.py
+```
+Or:
+```
+    python3 API_requests.py
 ```
 8. Go back to Chrome Extension for developer and activate the extension.
 9. You can browse through Twitter and have fun with Bot Detective.
